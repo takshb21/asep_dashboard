@@ -334,7 +334,7 @@ def new_teacher(new_teacher_survey_df, educator_details_df):
 
     # st.write('len of filtered data is ', len(filtered_copy_df))
     if total_records != 0:
-        chapter_4_chart(filtered_copy_df)
+        chapter_4_chart(filtered_copy_df, 0)
     else:
         st.info('Select Other Year No Record Found')
 
