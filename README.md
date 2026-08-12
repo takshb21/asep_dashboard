@@ -81,8 +81,8 @@ This dashboard automates the process of calculating ASEP compliance metrics for 
 
 ```bash
 # Clone the repository
-git clone <your-repo-url>
-cd <your-repo-folder>
+git clone https://github.com/takshb21/asep_dashboard.git
+cd asep_dashboard
 
 # (Recommended) Create a virtual environment
 python -m venv venv
