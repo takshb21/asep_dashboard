@@ -748,7 +748,7 @@ def About_us():
 
     st.markdown(
         """
-        <h4>Website Created By</h4>
+        <h4>Created By</h4>
         <ul style="line-height: 1.8; font-size: 18px;">
             <li>Taksh Beladiya</li>
             <li>Jeremy Martin</li>
@@ -776,6 +776,103 @@ def About_us():
         unsafe_allow_html=True
     )
 
+    st.markdown("---")
+
+    st.markdown(
+        """
+        <h4>📌 What Each Page Does</h4>
+        <ul style="line-height: 1.8; font-size: 17px;">
+            <li><strong>📁 Data Management</strong> — Upload your raw dataset files (Educator Details, Exam Roster, Principal Perception, Student Growth, Observation, Finishers, New Teacher Survey). The app auto-detects and renames each file so the dashboard can recognize it, and lets you download the renamed versions.</li>
+            <li><strong>📊 Dashboard</strong> — View calculated metrics across Chapters 3–8 (exam pass rates, principal perceptions, student growth, field supervision, teacher survey results, and the final ASEP Index Score), organized into tabs.</li>
+            <li><strong>ℹ️ About Us</strong> — Info about the team behind this dashboard and how to use the site (this page).</li>
+            <li><strong>💬 Feedback</strong> — Report errors, suggest changes, or request new features using the built-in form.</li>
+        </ul>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.markdown("---")
+
+    st.markdown("<h4>🧭 How to Navigate This Website</h4>", unsafe_allow_html=True)
+
+    nav_flow_css = """
+    <style>
+    .nav-flow {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin: 20px 0;
+    }
+    .nav-step {
+        background-color: #161B22;
+        border: 1px solid #30363D;
+        border-radius: 10px;
+        padding: 16px 18px;
+        width: 300px;
+        min-height: 130px;
+        text-align: center;
+    }
+    .nav-step .step-icon {
+        font-size: 30px;
+        margin-bottom: 6px;
+    }
+    .nav-step .step-title {
+        color: #58A6FF;
+        font-weight: 700;
+        font-size: 20px;
+        margin-bottom: 6px;
+    }
+    .nav-step .step-desc {
+        color: #E6EDF3;
+        font-size: 17px;
+        line-height: 1.4;
+    }
+    .nav-arrow {
+        font-size: 28px;
+        color: #F0B429;
+        font-weight: bold;
+    }
+    </style>
+    """
+
+    nav_flow_html = """
+    <div class="nav-flow">
+        <div class="nav-step">
+            <div class="step-icon">📁</div>
+            <div class="step-title">1. Data Management</div>
+            <div class="step-desc">Upload your Excel/CSV files. Rename any files if prompted.</div>
+        </div>
+        <div class="nav-arrow">➡️</div>
+        <div class="nav-step">
+            <div class="step-icon">✅</div>
+            <div class="step-title">2. Confirm Files</div>
+            <div class="step-desc">Check the ➡️ arrow list to confirm your files were renamed correctly.</div>
+        </div>
+        <div class="nav-arrow">➡️</div>
+        <div class="nav-step">
+            <div class="step-icon">📊</div>
+            <div class="step-title">3. Dashboard</div>
+            <div class="step-desc">Open each Chapter tab — it auto-fills once the right files are uploaded.</div>
+        </div>
+        <div class="nav-arrow">➡️</div>
+        <div class="nav-step">
+            <div class="step-icon">🏆</div>
+            <div class="step-title">4. Chapter 8 Score</div>
+            <div class="step-desc">View the final combined ASEP Index Score.</div>
+        </div>
+        <div class="nav-arrow">➡️</div>
+        <div class="nav-step">
+            <div class="step-icon">💬</div>
+            <div class="step-title">5. Feedback</div>
+            <div class="step-desc">Report issues or request changes anytime.</div>
+        </div>
+    </div>
+    """
+
+    st.markdown(nav_flow_css, unsafe_allow_html=True)
+    st.markdown(nav_flow_html, unsafe_allow_html=True)
 
 
 # ─────────────────────────────────────────────
@@ -790,7 +887,13 @@ def main():
 
 
     sidebar_data()
-    pg = st.navigation([Data_Management, Dashboard, About_us, Feedback])
+
+    pages = [st.Page(About_us, title="About Us", default=True),
+        st.Page(Data_Management, title="Data Management"),
+        st.Page(Dashboard, title="Dashboard"),  
+        st.Page(Feedback, title="Feedback"),
+    ]
+    pg = st.navigation(pages)
     pg.run()
 
 
