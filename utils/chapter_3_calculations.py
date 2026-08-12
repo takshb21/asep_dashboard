@@ -164,7 +164,15 @@ def indicator_1a_data(first_two_attempt_data, year_filter):
     
     return combined_df, year_taken
 
-def calculate_asep_indicator_1a(df, year_taken, tea_id_col='TEA ID', exam_name_col='Exam Name', 
+def indicator_1a_data_last_3_year_data(first_two_attempt_data, year_filter):
+    test_view = first_two_attempt_data[first_two_attempt_data['Exam Name'].isin(indicator_1a_pedagogy)]
+    first_year_df = test_view[test_view['Exam Date'].dt.year == (year_filter)]
+    second_year_df = test_view[test_view['Exam Date'].dt.year == (year_filter - 1)]
+    third_year_df = test_view[test_view['Exam Date'].dt.year == (year_filter - 2)]
+
+    return first_year_df, second_year_df, third_year_df
+
+def calculate_asep_indicator_1a_calculation(df, tea_id_col='TEA ID', exam_name_col='Exam Name', 
                                 exam_date_col='Exam Date', status_col='P/F Status'):
     
     # Chronologically number each attempt (1, 2, 3...) per candidate per exam
@@ -204,13 +212,50 @@ def calculate_asep_indicator_1a(df, year_taken, tea_id_col='TEA ID', exam_name_c
         final_percentage = 0
     else:
         final_percentage = round((passed_1st_or_2nd / total_tracked_attempts) * 100)
-        
+
     return {
         "Passed on 1st or 2nd Attempt (Numerator)": passed_1st_or_2nd,
         "Total Counted Attempts (Denominator)": total_tracked_attempts,
         "Indicator 1a Pass Rate (%)": final_percentage,
-        "year_taken": len(year_taken)
+        "year_taken": df['Exam Date'].dt.year.unique()
     }
+
+
+def calculate_asep_indicator_1a(first_two_attempt_data_1a_data, year_filter, pass_standard):
+    # st.table(first_two_attempt_data_1a_data[first_two_attempt_data_1a_data['Exam Date'].dt.year == (year_filter)])
+    first_year_df, second_year_df, third_year_df = indicator_1a_data_last_3_year_data(first_two_attempt_data_1a_data, year_filter=year_filter)    
+    first_score, second_score, third_score = calculate_asep_indicator_1a_calculation(first_year_df), calculate_asep_indicator_1a_calculation(second_year_df), calculate_asep_indicator_1a_calculation(third_year_df)
+
+    if (len(first_year_df) == 0 and len(second_year_df) == 0 and len(third_year_df) == 0) or (len(first_year_df) + len(second_year_df) + len(third_year_df) < 10):
+        return len(first_year_df)
+    elif first_score['Indicator 1a Pass Rate (%)'] >= pass_standard:
+        return 1
+    elif second_score['Indicator 1a Pass Rate (%)'] >= pass_standard or third_score['Indicator 1a Pass Rate (%)'] >= pass_standard:
+        return 0
+    else:
+        return -1
+
+def indicator_1b_data_last_3_year_data(first_two_attempt_data, year_filter):
+    test_view = first_two_attempt_data[first_two_attempt_data['Exam Name'].isin(indicator_1b_content)]
+    first_year_df = test_view[(test_view['Exam Date'] >= pd.Timestamp(year_filter - 1, 9, 1)) & (test_view['Exam Date'] <= pd.Timestamp(year_filter, 8, 31))]
+    second_year_df = test_view[(test_view['Exam Date'] >= pd.Timestamp(year_filter, 9, 1)) & (test_view['Exam Date'] <= pd.Timestamp(year_filter+1, 8, 31))]
+    third_year_df = test_view[(test_view['Exam Date'] >= pd.Timestamp(year_filter+1, 9, 1)) & (test_view['Exam Date'] <= pd.Timestamp(year_filter+2, 8, 31))]
+
+    return first_year_df, second_year_df, third_year_df
+
+def calculate_asep_indicator_1b(first_two_attempt_data_1b_data, year_filter, pass_standard):
+    # st.table(first_two_attempt_data_1a_data[first_two_attempt_data_1a_data['Exam Date'].dt.year == (year_filter)])
+    first_year_df, second_year_df, third_year_df = indicator_1b_data_last_3_year_data(first_two_attempt_data_1b_data, year_filter=year_filter)    
+    first_score, second_score, third_score = calculate_asep_indicator_1b_calculation(first_year_df), calculate_asep_indicator_1b_calculation(second_year_df), calculate_asep_indicator_1b_calculation(third_year_df)
+
+    if (len(first_year_df) == 0 and len(second_year_df) == 0 and len(third_year_df) == 0) or (len(first_year_df) + len(second_year_df) + len(third_year_df) < 10):
+        return len(first_year_df)
+    elif first_score['Indicator 1b Pass Rate (%)'] >= pass_standard:
+        return 1
+    elif second_score['Indicator 1b Pass Rate (%)'] >= pass_standard or third_score['Indicator 1b Pass Rate (%)'] >= pass_standard:
+        return 0
+    else:
+        return -1
 
 def indicator_1b_data(first_two_attempt_data, year_filter, exam_name_filter):
 
@@ -238,7 +283,7 @@ def indicator_1b_data(first_two_attempt_data, year_filter, exam_name_filter):
     
     return combined_df, year_taken
 
-def calculate_asep_indicator_1b(df):
+def calculate_asep_indicator_1b_calculation(df):
     """
     Calculates the ASEP Indicator 1b pass rate metrics based on chronological attempts.
     Expected DataFrame columns: ['TEA ID', 'Exam Name', 'Exam Date', 'P/F Status']
@@ -299,200 +344,6 @@ def calculate_asep_indicator_1b(df):
         "Indicator 1b Pass Rate (%)": float(pass_rate)
     }
 
-# def render_indicator_1a_charts(indi_1a_result: dict, combined_df_1a: pd.DataFrame):
-#     """
-#     Renders 3 charts for Indicator 1a:
-#       1. KPI metric cards (from indi_1a_result dict)
-#       2. Attempts by Exam Name — stacked pass/fail bar
-#       3. Pass rate by Race/Ethnicity — bar chart
-#     """
-#     passed = indi_1a_result["Passed on 1st or 2nd Attempt (Numerator)"]
-#     total  = indi_1a_result["Total Counted Attempts (Denominator)"]
-#     rate   = indi_1a_result["Indicator 1a Pass Rate (%)"]
-#     failed = total - passed
-
-#     # ── KPI row ──────────────────────────────────────────────
-#     c1, c2, c3 = st.columns(3)
-#     c1.metric("Passed (Numerator)",     passed)
-#     c2.metric("Total Attempts (Denom)", total)
-#     c3.metric("Pass Rate",              f"{rate:.1f}%")
-
-
-#     # ── Chart 1: Pass vs Fail donut ───────────────────────────
-#     import plotly.graph_objects as go
-
-#     col1, col2, col3 = st.columns(3)
-#     with col1:
-#         donut = go.Figure(go.Pie(
-#             labels=["Passed", "Failed"],
-#             values=[passed, failed],
-#             hole=0.65,
-#             marker_colors=["#1baf7a", "#e34948"],
-#             textinfo="label+percent",
-#             hovertemplate="%{label}: %{value}<extra></extra>",
-#         ))
-#         donut.update_layout(
-#             title="Pass vs Fail breakdown",
-#             showlegend=True,
-#             height=320,
-#             margin=dict(t=40, b=20, l=20, r=20),
-#         )
-#         st.plotly_chart(donut, use_container_width=True)
-
-#     with col2:
-#     # ── Chart 2: Attempts by Exam Name ───────────────────────
-#         exam_counts = (
-#             combined_df_1a.groupby(["Exam Name", "P/F Status"])
-#             .size()
-#             .unstack(fill_value=0)
-#             .rename(columns={"P": "Passed", "F": "Failed"})
-#             .reset_index()
-#         )
-
-#         bar_exam = go.Figure()
-#         if "Passed" in exam_counts.columns:
-#             bar_exam.add_trace(go.Bar(
-#                 name="Passed", x=exam_counts["Passed"], y=exam_counts["Exam Name"],
-#                 orientation="h", marker_color="#2a78d6"
-#             ))
-#         if "Failed" in exam_counts.columns:
-#             bar_exam.add_trace(go.Bar(
-#                 name="Failed", x=exam_counts["Failed"], y=exam_counts["Exam Name"],
-#                 orientation="h", marker_color="#e34948"
-#             ))
-#         bar_exam.update_layout(
-#             title="Attempts by exam name",
-#             barmode="group",
-#             height=max(280, len(exam_counts) * 44 + 80),
-#             margin=dict(t=40, b=20, l=20, r=20),
-#             xaxis_title="Count",
-#             yaxis_title="",
-#             legend=dict(orientation="h", y=1.08),
-#         )
-#         st.plotly_chart(bar_exam, use_container_width=True)
-
-#     with col3:
-#         # ── Chart 3: Pass rate by Race/Ethnicity ─────────────────
-#         race_group = combined_df_1a.groupby("Race/Ethnicity")["P/F Status"].apply(
-#             lambda s: round((s == "P").sum() / len(s) * 100, 1)
-#         ).reset_index(name="Pass Rate (%)")
-
-#         bar_race = go.Figure(go.Bar(
-#             x=race_group["Race/Ethnicity"],
-#             y=race_group["Pass Rate (%)"],
-#             marker_color="#2a78d6",
-#             text=race_group["Pass Rate (%)"].astype(str) + "%",
-#             textposition="outside",
-#             hovertemplate="%{x}: %{y}%<extra></extra>",
-#         ))
-#         bar_race.update_layout(
-#             title="Pass rate by race / ethnicity",
-#             height=300,
-#             margin=dict(t=40, b=20, l=20, r=20),
-#             yaxis=dict(range=[0, 110], ticksuffix="%"),
-#             xaxis_title="",
-#         )
-#         st.plotly_chart(bar_race, use_container_width=True)
-
-
-
-# def render_indicator_1b_charts(
-#     indi_1b_result: dict,
-#     sample_size: int,
-#     certificate_1b_cert_result: dict,
-# ):
-#     """
-#     Renders 3 charts for Indicator 1b:
-#       1. KPI metric cards (from indi_1b_result dict)
-#       2. Pass vs Fail donut
-#       3. Tests passed vs failed by certificate — grouped bar
-#       4. Pass rate by certificate area — bar chart
-#     """
-#     passed    = indi_1b_result["Number of Tests Passed"]
-#     completed = indi_1b_result["Number of Tests Completed"]
-#     rate      = indi_1b_result["Indicator 1b Pass Rate (%)"]
-#     failed    = completed - passed
- 
-#     # ── KPI row ──────────────────────────────────────────────
-#     c1, c2, c3 = st.columns(3)
-#     c1.metric("Tests Passed (Numerator)",      passed)
-#     c2.metric("Tests Completed (Denominator)", completed)
-#     c3.metric("Pass Rate",                     f"{rate:.1f}%")
- 
-#     # ── Chart 1: Pass vs Fail donut  +  Chart 2: by certificate bar ──────────
-#     col1, col2, col3 = st.columns(3)
- 
-#     with col1:
-#         donut = go.Figure(go.Pie(
-#             labels=["Passed", "Failed"],
-#             values=[passed, max(failed, 0)],
-#             hole=0.65,
-#             marker_colors=["#1baf7a", "#e34948"],
-#             textinfo="label+percent",
-#             hovertemplate="%{label}: %{value}<extra></extra>",
-#         ))
-#         donut.update_layout(
-#             title="Pass vs fail breakdown",
-#             showlegend=True,
-#             height=320,
-#             margin=dict(t=40, b=20, l=20, r=20),
-#         )
-#         st.plotly_chart(donut, use_container_width=True)
- 
-#     with col2:
-#         certs        = list(certificate_1b_cert_result.keys())
-#         cert_passed  = [certificate_1b_cert_result[k]["Number of Tests Passed"]    for k in certs]
-#         cert_complet = [certificate_1b_cert_result[k]["Number of Tests Completed"] for k in certs]
-#         cert_failed  = [c - p for c, p in zip(cert_complet, cert_passed)]
- 
-#         bar_cert = go.Figure()
-#         bar_cert.add_trace(go.Bar(
-#             name="Passed",
-#             x=cert_passed,
-#             y=certs,
-#             orientation="h",
-#             marker_color="#2a78d6",
-#             hovertemplate="%{y}: %{x} passed<extra></extra>",
-#         ))
-#         bar_cert.add_trace(go.Bar(
-#             name="Failed",
-#             x=cert_failed,
-#             y=certs,
-#             orientation="h",
-#             marker_color="#e34948",
-#             hovertemplate="%{y}: %{x} failed<extra></extra>",
-#         ))
-#         bar_cert.update_layout(
-#             title="Attempts by certificate area",
-#             barmode="group",
-#             height=max(280, len(certs) * 44 + 80),
-#             margin=dict(t=40, b=20, l=20, r=20),
-#             xaxis_title="Count",
-#             yaxis_title="",
-#             legend=dict(orientation="h", y=1.08),
-#         )
-#         st.plotly_chart(bar_cert, use_container_width=True)
- 
-#     with col3:
-#         # ── Chart 3: Pass rate by certificate area ────────────────────────────────
-#         cert_rates = [certificate_1b_cert_result[k]["Indicator 1b Pass Rate (%)"] for k in certs]
-    
-#         bar_rate = go.Figure(go.Bar(
-#             x=certs,
-#             y=cert_rates,
-#             marker_color="#2a78d6",
-#             text=[f"{r}%" for r in cert_rates],
-#             textposition="outside",
-#             hovertemplate="%{x}: %{y}%<extra></extra>",
-#         ))
-#         bar_rate.update_layout(
-#             title="Pass rate by certificate area",
-#             height=300,
-#             margin=dict(t=40, b=20, l=20, r=20),
-#             yaxis=dict(range=[0, 110], ticksuffix="%"),
-#             xaxis_title="",
-#         )
-#         st.plotly_chart(bar_rate, use_container_width=True)
 
 # ─────────────────────────────────────────────
 # DARK THEME DESIGN TOKENS
@@ -774,17 +625,17 @@ def render_indicator_1b_charts(
         )
         st.plotly_chart(bar_rate, use_container_width=True)
 
-@st.cache_data
+# @st.cache_data
 def prepare_chapter_3(exam_roaster_data, educator_details_data):
     merge_data = merge_chapter_3_data(exam_roaster_data, educator_details_data)
     first_two_attempt_data = get_first_attempts_data(merge_data=merge_data)
     return first_two_attempt_data
 
 def exam_pass_rate(exam_roaster_data, educator_details_data):
+
+    st.title('Chapter 3 – Certification Exam Pass Rate')
+    st.write(' ')
     first_two_attempt_data = prepare_chapter_3(exam_roaster_data, educator_details_data)
-
-
-
 
     # Indicator 1a
     first_two_attempt_data_1a_data = first_two_attempt_data[first_two_attempt_data['Exam Name'].isin(indicator_1a_pedagogy)]
@@ -799,7 +650,7 @@ def exam_pass_rate(exam_roaster_data, educator_details_data):
         st.session_state.chapter_3_exam_name = "All"
 
     # # ── Filters ──
-    st.subheader("🔍 Filter Options for Indicator 1a")
+    st.subheader("🔍 Filter Options for Indicator 1a: Percent of Individuals Passing Pedagogy Tests")
     filter_1a_col1, filter_1a_col2, filter_1a_col3 = st.columns(3)
 
     with filter_1a_col1:
@@ -832,7 +683,7 @@ def exam_pass_rate(exam_roaster_data, educator_details_data):
     if st.session_state.chapter_3_exam_name != "All":
         combined_df_1a = combined_df_1a[combined_df_1a['Exam Name'] == st.session_state.chapter_3_exam_name]
 
-    indi_1a_result = calculate_asep_indicator_1a(combined_df_1a, year_taken_1a)
+    indi_1a_result = calculate_asep_indicator_1a_calculation(combined_df_1a)
     
     render_indicator_1a_charts(indi_1a_result, combined_df_1a)
 
@@ -848,7 +699,7 @@ def exam_pass_rate(exam_roaster_data, educator_details_data):
     if "chapter_3_exam_name_1b" not in st.session_state:
         st.session_state.chapter_3_exam_name_1b = "All"
 
-    st.subheader("🔍 Filter Options for Indicator 1b")
+    st.subheader("🔍 Filter Options for Indicator 1b: Percent of Individuals Passing Content Pedagogy Tests")
     filter_1b_col1, filter_1b_col2, filter_1b_col3 = st.columns(3)
 
     with filter_1b_col1:
@@ -874,7 +725,7 @@ def exam_pass_rate(exam_roaster_data, educator_details_data):
     combined_df_1b, year_taken = indicator_1b_data(first_two_attempt_data_1b_data, year_filter=st.session_state.chapter_3_year_filter_1b, exam_name_filter=st.session_state.chapter_3_exam_name_1b)
     
     
-    indi_1b_result = calculate_asep_indicator_1b(combined_df_1b)
+    indi_1b_result = calculate_asep_indicator_1b_calculation(combined_df_1b)
     
 
     all_unique_result=combined_df_1b['Certification Grade Level'].unique().tolist()
@@ -883,7 +734,7 @@ def exam_pass_rate(exam_roaster_data, educator_details_data):
 
     for i in all_unique_result:
         retrieved_data = combined_df_1b[combined_df_1b['Certification Grade Level'] == i]
-        indi_1b_certification_result = calculate_asep_indicator_1b(retrieved_data)
+        indi_1b_certification_result = calculate_asep_indicator_1b_calculation(retrieved_data)
         certificate_1b_cert_result[i] = indi_1b_certification_result
 
 

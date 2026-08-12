@@ -59,9 +59,49 @@ def indicator_4a_calculate(df):
     # Count how many of those rows have a 'Y'
     met_requirement = (summary_df['Meet Minimum Requirement?'] == 'Y').sum()
 
-    # Return the dataframe alongside the two numbers
-    return summary_df, met_requirement, total_candidates
+    if total_candidates == 0:
+        overall_score = 0
+    else:
+        overall_score = met_requirement/total_candidates
 
+    # Return the dataframe alongside the two numbers
+    return {'summary_df':summary_df , 'met_requirement': met_requirement, 'total_candidates': total_candidates, 'Indicator 4a passing %': overall_score}
+
+def chapter_4_last_3_year_data(filtered_copy_df, current_year):
+    first_year_df = filtered_copy_df[filtered_copy_df["Data year"] == current_year]
+    second_year_df = filtered_copy_df[filtered_copy_df["Data year"] == current_year-1]
+    third_year_df = filtered_copy_df[filtered_copy_df["Data year"] == current_year-2]
+
+    return first_year_df, second_year_df, third_year_df
+
+def chapter_4a_calculation(filtered_copy_df, year_filter, pass_standard):
+    first_year_df, second_year_df, third_year_df = chapter_4_last_3_year_data(filtered_copy_df, year_filter) 
+
+    first_score, second_score, third_score = indicator_4a_calculate(first_year_df)['Indicator 4a passing %'], indicator_4a_calculate(second_year_df)['Indicator 4a passing %'], indicator_4a_calculate(third_year_df)['Indicator 4a passing %']
+
+    if (len(first_year_df) == 0 and len(second_year_df) == 0 and len(third_year_df) == 0) or (first_year_df['Candidate TEA ID'].nunique() + second_year_df['Candidate TEA ID'].nunique() + third_year_df['Candidate TEA ID'].nunique() < 10):
+        return '<blank>'
+    elif first_score >= pass_standard:
+        return 1
+    elif second_score >= pass_standard or third_score >= pass_standard:
+        return 0
+    else:
+        return -1
+    
+
+def chapter_4b_calculation(filtered_copy_df, year_filter, pass_standard):
+    first_year_df, second_year_df, third_year_df = chapter_4_last_3_year_data(filtered_copy_df, year_filter) 
+
+    (first_score, _), (second_score,_),  (third_score,_) = indicator_4b_calculate(first_year_df), indicator_4b_calculate(second_year_df), indicator_4b_calculate(third_year_df)
+
+    if (len(first_year_df) == 0 and len(second_year_df) == 0 and len(third_year_df) == 0) or (first_year_df['Candidate TEA ID'].nunique() + second_year_df['Candidate TEA ID'].nunique() + third_year_df['Candidate TEA ID'].nunique() < 10):
+        return '<blank>'
+    elif first_score['Indicator 4b passing %'] >= pass_standard:
+        return 1
+    elif second_score['Indicator 4b passing %'] >= pass_standard or third_score['Indicator 4b passing %'] >= pass_standard:
+        return 0
+    else:
+        return -1
 
 def _parse_duration_to_hours(duration_str):
     """Converts 'H:MM' or 'HH:MM' string to decimal hours. Returns None if unparseable."""
@@ -79,6 +119,15 @@ def _parse_duration_to_hours(duration_str):
 
 def group_size_calculate(df, id_col="Candidate TEA ID"):
     return df[id_col].nunique()
+
+def reshape_year(current_year: int, shift: int = 0) -> str:
+    """Returns the academic year string formatted as 'YYYY-YYYY' shifted back
+
+    by the given shift integer.
+    """
+    end_year = current_year - shift
+    start_year = end_year - 1
+    return f"{start_year}-{end_year}"
 
 
 def shift_academic_year(academic_year_str, steps_back):
@@ -117,16 +166,33 @@ def indicator_4b_calculate(df, id_col="Candidate TEA ID", points_col="Total Poin
     total_surveys = candidate_avg_points.shape[0]
     within_acceptable_values = int(candidate_avg_points["Within Acceptable Values"].sum())
 
-    result_dict = {
-        "Number of candidates' scores within acceptable values": within_acceptable_values,
-        "Total number of survey responses": total_surveys,
-    }
+    if total_surveys == 0:
+        result_dict = {
+            "Number of candidates' scores within acceptable values": 0,
+            "Total number of survey responses": 0,
+            "Indicator 4b passing %": 0
+        }
+    else:
+        result_dict = {
+            "Number of candidates' scores within acceptable values": within_acceptable_values,
+            "Total number of survey responses": total_surveys,
+            "Indicator 4b passing %": within_acceptable_values/total_surveys
+        }
 
     return result_dict, candidate_avg_points
 
-def field_supervision(observation_data):
-    df = process_chapter_6_records(observation_data)
+def field_supervision(observation_data, main_finisher_data):
+    st.title('Chapter 6 – Frequency, Duration, and Quality of Field Supervision')
+    st.write(' ')
 
+    df = process_chapter_6_records(observation_data)
+    
+    df = main_finisher_data.rename(columns={'TEA ID': 'Candidate TEA ID'}).merge(
+        df, 
+        on='Candidate TEA ID', 
+        how='inner'
+    )
+    
     available_year_options = df['filter_year'].unique().tolist()
 
     
@@ -137,8 +203,8 @@ def field_supervision(observation_data):
         st.session_state.chapter_6_experience_model_setting = "All"
 
     # ── Filters ──
-    st.header("Indicator 4a")
-    st.subheader("🔍 Filter Options")
+    
+    st.subheader("🔍 Filter Options:")
     filter_col1, filter_col2, filter_col3 = st.columns(3)
 
     with filter_col1:
@@ -162,16 +228,16 @@ def field_supervision(observation_data):
         filtered_copy_df = filtered_copy_df[filtered_copy_df["filter_year"] == st.session_state.chapter_6_year_filter]
     if experience_model_selected != "All":
         filtered_copy_df = filtered_copy_df[filtered_copy_df["Experience Model"] == experience_model_selected]
-
-
-    result_df, num_met_req, num_total_exp = indicator_4a_calculate(filtered_copy_df)
+    st.markdown("---")
+    st.header("Frequency and Duration of Field Observations (ASEP Accountability Indicator 4a)")
+    field_supervision_df = indicator_4a_calculate(filtered_copy_df)
     
-    plot_indicator_4a(filtered_copy_df, num_met_req, num_total_exp)
+    plot_indicator_4a(filtered_copy_df, field_supervision_df['met_requirement'], field_supervision_df['total_candidates'])
 
     # Indicator 4b
     # Check the individual level data
     # Chekc what toal points are taken as there are 3 people also so which point to consider
-    st.header("Indicator 4b")
+    st.header("Quality of Field Supervision (ASEP Indicator 4b)")
 
     st.write(filtered_copy_df['Candidate TEA ID'].nunique())
 
@@ -193,167 +259,6 @@ def field_supervision(observation_data):
     plot_indicator_4b(indicator_4b_results, candidate_level_df)
 
     return df
-
-# def plot_indicator_4a(result_df: pd.DataFrame, num_met_req: int, num_total_exp: int):
-#     """
-#     Renders 3 charts summarizing Indicator 4A (ASEP Chapter 6):
-#       1. Donut chart: overall Met vs Not Met requirement
-#       2. Gauge chart: % compliance
-#       3. Bar chart: average visit duration (hours) by Assignment Type
-#     """
-
-#     not_met = num_total_exp - num_met_req
-#     pct_met = round((num_met_req / num_total_exp) * 100, 1) if num_total_exp else 0
-
-#     # st.subheader("Indicator 4A — Overview")
-
-#     col1, col2, col3 = st.columns(3)
-
-#     # ---------- Chart 1: Donut chart (Met vs Not Met) ----------
-#     with col1:
-#         donut_fig = go.Figure(
-#             data=[go.Pie(
-#                 labels=["Met Requirement", "Not Met"],
-#                 values=[num_met_req, not_met],
-#                 hole=0.55,
-#                 marker=dict(colors=["#2E7D32", "#C62828"]),
-#                 textinfo="label+value+percent",
-#             )]
-#         )
-#         donut_fig.update_layout(
-#             title="Met vs Not Met",
-#             showlegend=True,
-#             margin=dict(t=50, b=0, l=0, r=0),
-#         )
-#         st.plotly_chart(donut_fig, use_container_width=True)
-
-#     # ---------- Chart 2: Gauge chart (% compliance) ----------
-#     with col2:
-#         gauge_fig = go.Figure(
-#             go.Indicator(
-#                 mode="gauge+number",
-#                 value=pct_met,
-#                 number={"suffix": "%"},
-#                 title={"text": "Compliance Rate"},
-#                 gauge={
-#                     "axis": {"range": [0, 100]},
-#                     "bar": {"color": "#1565C0"},
-#                     "steps": [
-#                         {"range": [0, 50], "color": "#FFCDD2"},
-#                         {"range": [50, 80], "color": "#FFF9C4"},
-#                         {"range": [80, 100], "color": "#C8E6C9"},
-#                     ],
-#                 },
-#             )
-#         )
-#         gauge_fig.update_layout(margin=dict(t=50, b=0, l=0, r=0))
-#         st.plotly_chart(gauge_fig, use_container_width=True)
-
-#     # ---------- Chart 3: Average Duration by Assignment Type ----------
-#     with col3:
-#         if "Assignment Type" in result_df.columns and "Duration Hours" in result_df.columns:
-#             temp_df = result_df.copy()
-#             temp_df["Duration_Decimal"] = temp_df["Duration Hours"].apply(_parse_duration_to_hours)
-#             temp_df = temp_df.dropna(subset=["Duration_Decimal"])
-
-#             avg_duration = (
-#                 temp_df.groupby("Assignment Type")["Duration_Decimal"]
-#                 .mean()
-#                 .round(2)
-#                 .sort_values(ascending=False)
-#             )
-
-#             if not avg_duration.empty:
-#                 bar_fig = go.Figure(
-#                     data=[go.Bar(
-#                         x=avg_duration.index,
-#                         y=avg_duration.values,
-#                         text=avg_duration.values,
-#                         texttemplate="%{text:.2f} hrs",
-#                         textposition="outside",
-#                         marker_color="#1565C0",
-#                     )]
-#                 )
-#                 bar_fig.update_layout(
-#                     title="Avg Duration by Assignment Type",
-#                     xaxis_title="Assignment Type",
-#                     yaxis_title="Avg Duration (Hrs)",
-#                     margin=dict(t=50, b=0, l=0, r=0),
-#                 )
-#                 st.plotly_chart(bar_fig, use_container_width=True)
-#             else:
-#                 st.caption("No valid duration data found to compute averages.")
-#         else:
-#             st.caption(
-#                 "Columns 'Assignment Type' and/or 'Duration Hours' not found. "
-#                 f"Available columns: {list(result_df.columns)}"
-#             )
-
-
-# def plot_indicator_4b(result_dict, candidate_df):
-#     # st.subheader("📊 Indicator 4b Charts")
-
-#     percent_met = round(
-#         (result_dict["Number of candidates' scores within acceptable values"] /
-#          result_dict["Total number of survey responses"]) * 100
-#     ) if result_dict["Total number of survey responses"] > 0 else 0
-
-#     chart_col1, chart_col2, chart_col3 = st.columns(3)
-
-#     with chart_col1:
-#         pie_df = pd.DataFrame({
-#             "Status": ["Within Acceptable Values", "Not Within Acceptable Values"],
-#             "Count": [
-#                 result_dict["Number of candidates' scores within acceptable values"],
-#                 result_dict["Total number of survey responses"] - result_dict["Number of candidates' scores within acceptable values"]
-#             ]
-#         })
-#         fig_pie = px.pie(
-#             pie_df, names="Status", values="Count",
-#             title="Candidates Meeting Standard",
-#             color="Status",
-#             color_discrete_map={
-#                 "Within Acceptable Values": "#2ecc71",
-#                 "Not Within Acceptable Values": "#e74c3c"
-#             }
-#         )
-#         st.plotly_chart(fig_pie, use_container_width=True)
-
-#     with chart_col2:
-#         fig_hist = px.histogram(
-#             candidate_df, x="Average Total Points", nbins=15,
-#             title="Distribution of Average Total Points",
-#             color_discrete_sequence=["#3498db"]
-#         )
-#         fig_hist.add_vline(x=22, line_dash="dash", line_color="red")
-#         st.plotly_chart(fig_hist, use_container_width=True)
-
-#     with chart_col3:
-#         fig_gauge = go.Figure(go.Indicator(
-#             mode="gauge+number",
-#             value=percent_met,
-#             title={"text": "Indicator 4b %"},
-#             gauge={
-#                 "axis": {"range": [0, 100]},
-#                 "bar": {"color": "black"},
-#                 "steps": [
-#                     {"range": [0, 70], "color": "#e74c3c"},
-#                     {"range": [70, 100], "color": "#2ecc71"},
-#                 ],
-#             }
-#         ))
-#         st.plotly_chart(fig_gauge, use_container_width=True)
-
-
-
-
-
-
-
-
-
-
-
 
 
 

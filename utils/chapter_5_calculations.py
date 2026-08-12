@@ -6,10 +6,6 @@ import plotly.graph_objects as go
 from utils.gauge import gauge
 
 def chapter_5_data_preparation(educator_data, academic_growth_data):
-    # educator_data = pd.read_excel(educator_data_path, skipfooter=2)
-
-    # academic_growth_data = pd.read_excel(academic_growth_data_path, skipfooter=2)
-
     merged_growth_df = academic_growth_data.merge(
             educator_data, 
             on='TEA ID', 
@@ -21,7 +17,7 @@ def chapter_5_data_preparation(educator_data, academic_growth_data):
     # 3. Drop duplicates, keeping only the 'last' occurrence for each TEA ID
     df_latest = df1_sorted.drop_duplicates(subset='TEA ID', keep='first')
 
-    # Optional: Reset the index for a clean dataframe
+    # Optional: Reset the index for a clean dataframestudent_growth_data
     df_latest = df_latest.reset_index(drop=True)
 
     return df_latest
@@ -54,253 +50,7 @@ def _asep_label(score: float) -> str:
 def _bar_colors(series: pd.Series) -> list:
     return [MET_COLOR if v >= TARGET else MISSED_COLOR for v in series]
 
-# def chapter_5_chart(merge_data):
-#     st.markdown("---")
-#     df = merge_data.copy()
-
-#     # 1. Calculate the average of Math and English/Reading scores
-#     # axis=1 calculates row-wise. It safely averages the two, or takes the single available score if one is NaN.
-#     df['Calculated Growth Score'] = df[['Mathematics Student Growth Score', 'English/ Reading Student Growth Score']].mean(axis=1)
-
-#     # 2. Fill any remaining blanks with the original Overall Student Growth Score just in case, 
-#     # then drop rows only if they are completely missing all three scores.
-#     df['Calculated Growth Score'] = df['Calculated Growth Score'].fillna(df['Overall Student Growth Score'])
-#     df = df.dropna(subset=['Calculated Growth Score'])
-
-#     # 3. Create the compliance status flag
-#     df['ASEP Standard'] = df['Calculated Growth Score'].apply(
-#         lambda x: 'Met Standard (>50)' if x > 50 else 'Did Not Meet (<=50)'
-#     )
-
-#     # 4. Clean up Gender data (combine Gender_x and Gender_y to prevent gaps)
-#     df['Gender'] = df['Gender_x'].fillna(df['Gender_y']).fillna('Unknown')
-
-#     # --- DASHBOARD LAYOUT ---
-#     col1, col2 = st.columns(2)
-#     st.markdown("---")
-#     col3, col4 = st.columns(2)
-#     col5, col6 = st.columns(2)
-
-
-#     # --- CHART 1: Overall Compliance Breakdown (With Gender Filter Applied) ---
-#     with col1:
-#         # st.subheader("Overall ASEP Compliance")
-#         # fig1 = px.pie(
-#         #     df, 
-#         #     names='ASEP Standard', 
-#         #     hole=0.4, 
-#         #     color='ASEP Standard',
-#         #     color_discrete_map={'Met Standard (>50)': "#72d188", 'Did Not Meet (<=50)': '#dc3545'}
-#         # )
-#         # st.plotly_chart(fig1, use_container_width=True)
-
-#         st.subheader("Overall Average Score")
-#         st.caption(
-#             "Gauge bands: 🟢 Green = Satisfactory (50 - 100) "
-#             "🔴 Red = Needs Improvement (0 – 49). "
-#             "The line indicate overall average score."
-#         )
-
-
-#         if 'Calculated Growth Score' in df.columns:
-#             avg_score = df['Calculated Growth Score'].mean()
-#         else:
-#             st.error("Column 'Calculated Growth Score' not found in DataFrame.")
-#             return None
-
-#         low_color = "#FF1708"
-#         high_color = "#1B8720"
-        
-#         gauge_color = high_color if avg_score >= 50 else low_color
-
-#         fig = go.Figure(
-#                 go.Indicator(
-#                     mode="gauge+number",
-#                     value=avg_score,
-#                     domain={"x": [0, 1], "y": [0, 1]},
-#                     gauge={
-#                         "axis": {
-#                             "range": [0, 100],
-#                             "tickwidth": 1,
-#                             "tickcolor": "darkblue",
-#                         },
-#                         "bar": {"color": gauge_color},  # This changes dynamically
-#                         "bgcolor": "white",
-#                         "borderwidth": 2,
-#                         "bordercolor": "gray",
-#                         "steps": [
-#                             {"range": [0, 50], "color": "#000000"},
-#                             {"range": [50, 100], "color": "#000000"},
-#                         ],
-#                     },
-#                 )
-#             )
-
-#         # 4. Render in Streamlit
-#         st.plotly_chart(fig, use_container_width=True)
-        
-
-#     # --- CHART 2: Average Score by Certification Area Grade Level ---
-#     with col2:
-#         st.subheader("Avg Score by Certification Area")
-#         # Group and calculate average
-#         cert_avg = df.groupby('Certification Area Grade Level')['Calculated Growth Score'].mean().reset_index()
-        
-#         # Sort Ascending = True pushes the highest values to the TOP of a Plotly horizontal chart
-#         cert_avg = cert_avg.sort_values(by='Calculated Growth Score', ascending=True)
-        
-#         fig2 = px.bar(
-#             cert_avg,
-#             x='Calculated Growth Score',
-#             y='Certification Area Grade Level',
-#             orientation='h', # This makes it a horizontal bar chart
-#             color='Calculated Growth Score',
-#             color_continuous_scale='Greens',
-#             labels={'Calculated Growth Score': 'Avg Score', 'Certification Area Grade Level': ''}
-#         )
-        
-#         # The threshold line is vertical (vline) because the scores are now on the X-axis
-#         fig2.add_vline(x=50, line_dash="dash", line_color="red", annotation_text="Target: 50")
-        
-#         st.plotly_chart(fig2, use_container_width=True)
-
-
-    
-#     # --- CHART 3: Performance by Finisher Year (Stacked Bar) ---
-#     with col3:
-#         st.subheader("Compliance by Finisher Year")
-#         cohort_counts = df.groupby(['Finisher Year', 'ASEP Standard']).size().reset_index(name='Count')
-#         fig3 = px.bar(
-#             cohort_counts, 
-#             x='Finisher Year', 
-#             y='Count', 
-#             color='ASEP Standard',
-#             barmode='group',
-#             color_discrete_map={'Met Standard (>50)': '#28a745', 'Did Not Meet (<=50)': '#dc3545'}
-#         )
-#         st.plotly_chart(fig3, use_container_width=True)
-
-
-#     # --- CHART 4: Average Score by Year of Teaching & Race/Ethnicity ---
-#     # Breaking this into two clean sub-tabs within the 4th quadrant to avoid crowding
-#     with col4:
-#         tab1, tab2 = st.tabs(["📊 By Year of Teaching", "🧬 By Race / Ethnicity"])
-        
-#         with tab1:
-#             st.write("### Avg Score by Year of Teaching")
-#             # Ensure 'Year of Teaching' is treated well for sorting/averaging
-#             teaching_year_avg = df.groupby('Year of Teaching')['Calculated Growth Score'].mean().reset_index()
-#             teaching_year_avg = teaching_year_avg.sort_values(by='Year of Teaching')
-            
-#             fig4a = px.line(
-#                 teaching_year_avg,
-#                 x='Year of Teaching',
-#                 y='Calculated Growth Score',
-#                 markers=True,
-#                 labels={'Calculated Growth Score': 'Avg Growth Score'}
-#             )
-#             fig4a.add_hline(y=50, line_dash="dash", line_color="red", annotation_text="Target: 50")
-#             st.plotly_chart(fig4a, use_container_width=True)
-            
-#         with tab2:
-#             st.write("### Avg Score by Race / Ethnicity")
-#             # Standardize naming fallback just in case columns differ
-#             df['Race_Group'] = df['Race/ Ethnicity'].fillna(df['Race/Ethnicity']).fillna('Unknown')
-#             race_avg = df.groupby('Race_Group')['Calculated Growth Score'].mean().reset_index()
-#             race_avg = race_avg.sort_values(by='Calculated Growth Score', ascending=False)
-            
-#             fig4b = px.bar(
-#                 race_avg,
-#                 x='Race_Group',
-#                 y='Calculated Growth Score',
-#                 color='Calculated Growth Score',
-#                 color_continuous_scale='Purples',
-#                 labels={'Race_Group': 'Race/Ethnicity', 'Calculated Growth Score': 'Avg Score'}
-#             )
-#             fig4b.add_hline(y=50, line_dash="dash", line_color="red")
-#             st.plotly_chart(fig4b, use_container_width=True)
- 
-#     st.markdown("---")
-
-#     with col5:
-#         st.subheader("Students Achieving Target Growth (Score ≥ 50)")
-
-#         required_cols = [
-#                 "Mathematics Student Growth Score",
-#                 "English/ Reading Student Growth Score",
-#         ]
-#         if not all(col in merge_data.columns for col in required_cols):
-#             st.error(
-#                 f"Missing required columns. Please ensure both {required_cols} exist."
-#             )
-#             return
-
-#         # 2. Calculate the Growth Score (Average of Math and English/Reading)
-#         merge_data["Calculated Growth Score"] = merge_data[required_cols].mean(
-#             axis=1
-#         )
-
-#         # 3. Calculate total records and records matching the threshold (>= 50)
-#         total_records = len(merge_data)
-        
-#         if total_records == 0:
-#             st.warning("The provided DataFrame is empty.")
-#             return
-
-#         # Corrected filtering logic to get the true count of rows >= 50
-#         count_above_or_equal_50 = len(
-#             merge_data[merge_data["Calculated Growth Score"] >= 50]
-#         )
-#         count_below_50 = total_records - count_above_or_equal_50
-
-#         # Compute percentages
-#         pct_above_or_equal_50 = (count_above_or_equal_50 / total_records) * 100
-#         pct_below_50 = (count_below_50 / total_records) * 100
-
-#         # 4. Display a Summary Metric Card
-#         st.metric(
-#             label="",
-#             value=f"{pct_above_or_equal_50:.1f}%",
-#             delta=f"{count_above_or_equal_50} out of {total_records} students",
-#             delta_color="normal",
-#         )
-
-#         # 5. Create a Donut Chart to visualize the distribution percentage
-#         labels = ["Score ≥ 50 (Met Target)", "Score < 50 (Below Target)"]
-#         values = [pct_above_or_equal_50, pct_below_50]
-#         colors = ["#1B8720", "#FF1708"]  # Matching your green and red hex choices
-
-#         fig = go.Figure(
-#             data=[
-#                 go.Pie(
-#                     labels=labels,
-#                     values=values,
-#                     hole=0.5,  # Makes it a donut chart
-#                     marker=dict(colors=colors),
-#                     textinfo="percent+label",
-#                     hoverinfo="label+value+percent",
-#                 )
-#             ]
-#         )
-
-#         # Style layout to be transparent and adapt nicely to Streamlit themes
-#         fig.update_layout(
-#             title={
-#                 "text": "Growth Score Threshold Breakdown",
-#                 "y": 0.95,
-#                 "x": 0.5,
-#                 "xanchor": "center",
-#                 "yanchor": "top",
-#             },
-#             showlegend=False,
-#             paper_bgcolor="rgba(0,0,0,0)",
-#             plot_bgcolor="rgba(0,0,0,0)",
-#             height=350,
-#             margin=dict(l=20, r=20, t=60, b=20),
-#         )
-
-#         # Render chart in Streamlit
-#         st.plotly_chart(fig, use_container_width=True)
+    return first_year_df, second_year_df, third_year_df
 
 def chapter_5_summary(df):
     score_cols = ["Mathematics Student Growth Score", "English/ Reading Student Growth Score"]
@@ -330,6 +80,26 @@ def chapter_5_summary(df):
         "pct_meeting_standard": round(pct_meeting_standard, 2), 
     }
 
+def chapter_5_last_3_year_data(filtered_copy_df, current_year):
+    first_year_df = filtered_copy_df[filtered_copy_df["Data Year"] == current_year]
+    second_year_df = filtered_copy_df[filtered_copy_df["Data Year"] == current_year-1]
+    third_year_df = filtered_copy_df[filtered_copy_df["Data Year"] == current_year-2]
+    return first_year_df, second_year_df, third_year_df
+
+def chapter_5_calculation(filtered_copy_df, year_filter, pass_standard):
+    first_year_df, second_year_df, third_year_df = chapter_5_last_3_year_data(filtered_copy_df, year_filter) 
+
+    first_score, second_score, third_score = chapter_5_summary(first_year_df), chapter_5_summary(second_year_df), chapter_5_summary(third_year_df)
+
+    if (len(first_year_df) == 0 and len(second_year_df) == 0 and len(third_year_df) == 0) or (first_year_df['TEA ID'].nunique() + second_year_df['TEA ID'].nunique() + third_year_df['TEA ID'].nunique() < 10):
+        return '<blank>'
+    elif first_score['pct_meeting_standard'] >= pass_standard:
+        return 1
+    elif second_score['pct_meeting_standard'] >= pass_standard or third_score['pct_meeting_standard'] >= pass_standard:
+        return 0
+    else:
+        return -1
+    
 def get_asep_threshold(year_of_teaching):
     """
     Returns the ASEP Chapter 5 compliance threshold for a given reporting year.
@@ -668,7 +438,7 @@ def chapter_5_chart(merge_data, year_of_teaching):
             st.plotly_chart(fig6, use_container_width=True)
         
 
-@st.cache_data
+# @st.cache_data
 def prepare_chapter_5(educator_data, student_growth):
     df = chapter_5_data_preparation(educator_data, student_growth)
     df = verify_certificate(df)
@@ -677,10 +447,9 @@ def prepare_chapter_5(educator_data, student_growth):
     return df
 
 def student_growth(educator_data, student_growth):
-    # merge_data = chapter_5_data_preparation(educator_data, student_growth)
-    # merge_data = verify_certificate(merge_data)
-    # merge_data = eligible_window(merge_data)
-    # merge_data = student_minimum(merge_data)
+    st.title('Chapter 5 – Improvement in Student Achievement of Students Taught by Beginning Teachers')
+    st.write(' ')
+
     merge_data = prepare_chapter_5(educator_data, student_growth)
 
     if "chapter_5_gender_filter" not in st.session_state:
@@ -692,7 +461,7 @@ def student_growth(educator_data, student_growth):
         st.session_state.chapter_5_data_year = available_year_of_teaching_options
 
     # # ── Filters ──
-    st.subheader("🔍 Filter Options")
+    st.subheader("🔍 Filter Options: Student growth of Beginning Teachers (ASEP Accountability Indicator 3)")
     filter_col1, filter_col2, filter_col3 = st.columns(3)
     
     with filter_col1:

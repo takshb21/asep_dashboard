@@ -4,13 +4,34 @@ import io
 import plotly.express as px
 import plotly.graph_objects as go
 from utils.data_management import show_old_new_file, download_new_file, process_and_rename_file
-from utils.chapter_4_calculations import principal_perceptions, first_year_status, chapter_4_chart, merge_both_df, get_asep_consolidated_data, remove_duplicates, missing_required_sections, chapter_4_group_aggregration, chapter_4_survey_summary
-from utils.chapter_5_calculations import verify_certificate, student_growth, chapter_5_summary
-from utils.chapter_3_calculations import exam_pass_rate, indicator_1a_data, indicator_1b_data, calculate_asep_indicator_1a
-from utils.chapter_6_calculations import process_chapter_6_records, indicator_4a_calculate, plot_indicator_4a, plot_indicator_4b, field_supervision
+from utils.chapter_4_calculations import principal_perceptions, specific_year_data, chapter_4_chart, merge_both_df, get_asep_consolidated_data, remove_duplicates, missing_required_sections, chapter_4_group_aggregration, chapter_4_survey_summary, calculate_asep_chapter_4
+from utils.chapter_5_calculations import verify_certificate, student_growth, chapter_5_summary, chapter_5_calculation
+from utils.chapter_3_calculations import exam_pass_rate, indicator_1a_data, indicator_1b_data, calculate_asep_indicator_1a, calculate_asep_indicator_1b
+from utils.chapter_6_calculations import process_chapter_6_records, indicator_4a_calculate, plot_indicator_4a, plot_indicator_4b, field_supervision, chapter_4a_calculation, chapter_4b_calculation 
+from utils.chapter_7_calculations import new_teacher
 
 import plotly.express as px
 import plotly.graph_objects as go
+
+
+
+# import os
+# import psutil
+
+# def get_memory_usage():
+#     # Gets the Resident Set Size (RSS) memory of the current process in MB
+#     process = psutil.Process(os.getpid())
+#     mem_bytes = process.memory_info().rss
+#     return mem_bytes / (1024 * 1024)
+
+# st.title("Dashboard Performance Monitor")
+
+# # Display baseline memory usage
+# current_mem = get_memory_usage()
+# st.metric(label="Current Process Memory Usage", value=f"{current_mem:.2f} MB")
+
+
+
 
 # ─────────────────────────────────────────────
 # DARK THEME DESIGN TOKENS
@@ -136,11 +157,73 @@ def sidebar_data():
 
 
 def Data_Management():
-    st.title("Data Management")
+    st.title("📁 Data Management")
+
+    st.warning(
+        "⚠️ **Rename before uploading:** The **Principal Perception Dataset** and the "
+        "**New Teacher Survey Dataset** come from the *same* I2I report (New Teacher Perceptions "
+        "by Candidate), so the downloaded files look identical. Please rename them manually before "
+        "uploading, or the app won't be able to tell them apart:\n\n"
+        "- **Principal Perception Dataset** → rename to **academic_year_principal_perceptions**\n"
+        "- **New Teacher Survey Dataset** → rename to **new_teacher_perceptions_by_candidate**"
+    )
+
+    with st.expander("📋 What datasets do I need? (click to expand)", expanded=True):
+        st.markdown("""
+Each dataset comes from a different report in **I2I**, **ECOS**, or **ResultsAnalyzer**. Here's where each one comes from, and which chapters need it.
+
+| Dataset | Where to get it from |
+|---|---|
+| **Educator Details** | I2I → EPP Employment and Retention → Educator Details |
+| **Exam Roster** | ResultsAnalyzer → Texas Examinee Data → Examinee Roster |
+| **Principal Perception** | I2I → EPP Perception Surveys → New Teacher Perceptions by Candidate (View by Academic Year) |
+| **Student Growth** | I2I → EPP Student Growth → Average Student Growth by Candidate |
+| **Observation** | ECOS → EPP → ASEP → Observations Report (Academic Year 2025-26) |
+| **Finishers** | ECOS → ASEP → Maint Finishers |
+| **New Teacher Survey** | I2I → EPP Perception Surveys → New Teacher Perceptions by Candidate |
+
+**Dataset requirement for each chapter**
+- **Chapter 3** — Exam Roster + Educator Details
+- **Chapter 4** — Principal Perception + Educator Details
+- **Chapter 5** — Educator Details + Student Growth
+- **Chapter 6** — Observation + Finishers
+- **Chapter 7** — Educator Details + New Teacher Survey
+- **Chapter 8** — All datasets
+        """)
+
+
+    # ── PDF: Detailed dataset download guide ──
+    pdf_path = "utils/dataset_download_info.pdf"
+    try:
+        with open(pdf_path, "rb") as pdf_file:
+            pdf_bytes = pdf_file.read()
+        st.download_button(
+            label="📄 Download Full Dataset Download Guide (PDF)",
+            data=pdf_bytes,
+            file_name="dataset_download_info.pdf",
+            mime="application/pdf",
+        )
+        st.caption("Step-by-step instructions with screenshots for downloading each dataset from I2I, ECOS, and ResultsAnalyzer.")
+    except FileNotFoundError:
+        st.warning(f"⚠️ Reference guide not found at `{pdf_path}`. Please add `dataset_download_info.pdf` to that folder.")
+
+
+    st.markdown("---")
+    st.subheader("1️⃣ Upload Your Files")
+    st.caption(
+        "Upload your files below. The app automatically detects and renames each one so the "
+        "dashboard can recognize it — the ➡️ arrow shows the original name on the left and the "
+        "**renamed file name** on the right."
+    )
     show_old_new_file()
+
+    st.markdown("---")
+    st.subheader("2️⃣ Download Renamed Files")
+    st.caption(
+        "Use the button below to download your file with its corrected/renamed filename — "
+        "click it to save the renamed file to your computer."
+    )
     download_new_file()
-
-
 
 
 
@@ -255,220 +338,234 @@ indicator_1b_content = [
 
         
 
-@st.cache_data
-def prepare_chapter_7(new_teacher_survey_df, educator_df):
-    merged = merge_both_df(new_teacher_survey_df, educator_df)
-    merged = get_asep_consolidated_data(merged)
-    merged = verify_certificate(merged)
-    merged = missing_required_sections(merged)
-    merged = remove_duplicates(merged)
-    return merged
-
-def new_teacher(new_teacher_survey_df, educator_details_df):
-    merged = prepare_chapter_7(new_teacher_survey_df, educator_details_df)
-
-    available_cohort_options = sorted(merged["Admission Cohort"].unique().astype(int).tolist())
-    available_employment_options = sorted(merged['Employment Date'].dt.year.astype(int).unique().tolist())
-
-    if "chapter_7_cohort_filter" not in st.session_state:
-        st.session_state.chapter_7_cohort_filter = available_cohort_options  # Or [2019, 2020, 2021] depending on your default target
-        
-    if "chapter_7_gender_filter" not in st.session_state:
-        st.session_state.chapter_7_gender_filter = "All"
-
-    if "chapter_7_employment_date" not in st.session_state:
-        st.session_state.chapter_7_employment_date = available_employment_options
 
 
-    # # ── Filters ──
-    st.subheader("🔍 Filter Options")
+
+
+
+
+def asep_index_score(first_two_attempt_data_1a_data, first_two_attempt_data_1b_data, principal_dataset, teacher_survey_dataset, student_growth_data, field_supervision_dataset):
+    st.title('Chapter 8 – Determination of ASEP Index Score')
+    st.write(' ')
+    # ── Filters ──
+    st.subheader("🔍 Filter Options:")
     filter_col1, filter_col2, filter_col3 = st.columns(3)
-    
+
     with filter_col1:
-        gender_selected = st.selectbox(
-            "Gender",
-            options=["All"] + sorted(merged["Gender"].unique().tolist()),
-            key="chapter_7_gender_select",
-        )
-        st.session_state.chapter_7_gender_filter = gender_selected
-
-    with filter_col2:
-        admission_cohort = st.multiselect(
-            "Admission Cohort Year",
-            options=available_cohort_options,
-            default=st.session_state.chapter_7_cohort_filter,
-            key="chapter_7_cohort_select",
-        )
-        
-        # If the user changes selection, trigger a rerun so the preprocessor runs with new years
-        if admission_cohort != st.session_state.chapter_7_cohort_filter:
-            st.session_state.chapter_7_cohort_filter = admission_cohort
-            # st.rerun()
-
-    with filter_col3:
-        employment_date_selected = st.selectbox(
-            "Employment Date",
-            options=available_employment_options,
-            # default=st.session_state.chapter_7_employment_date,
-            key="chapter_7_emp_date_select"
+        year_filter = st.selectbox(
+            "Year Filter",
+            options=list(range(2016, 2027)),
+            key="chapter_8_year_select",
         )
 
-        if employment_date_selected != st.session_state.chapter_7_employment_date:
-            st.session_state.chapter_7_employment_date = employment_date_selected
-
-    filtered_copy_df = merged.copy()
-    if gender_selected != "All":
-        filtered_copy_df = filtered_copy_df[filtered_copy_df["Gender"] == gender_selected]
-    if admission_cohort:
-        filtered_copy_df = filtered_copy_df[filtered_copy_df["Admission Cohort"].isin(admission_cohort)]
-    filtered_copy_df = first_year_status(filtered_copy_df, st.session_state.chapter_7_employment_date)
-
-
-    filtered_copy_df, years_checked, total_records = chapter_4_group_aggregration(filtered_copy_df, employment_date_selected)
-    # if years_checked > 1 and total_records > 0:
-    st.info(
-        f"ℹ️ **Small Group Aggregation Applied:** Initial cohort was under 10. "
-        f"Aggregated data across {years_checked} consecutive years. "
-        f"Total evaluation sample size: **{total_records}**."
-    )
-
-    # st.write('len of filtered data is ', len(filtered_copy_df))
-    if total_records != 0:
-        chapter_4_chart(filtered_copy_df, 0)
-    else:
-        st.info('Select Other Year No Record Found')
-
-    return merged
-
-
-
-
-
-
-
-
-
-
-
-
-def asep_index_score(first_two_attempt_data_1a_data, first_two_attempt_data_1b_data, principal_dataset, teacher_survey_dataset, student_growth_data, field_supervision_dataset, principal_year_total):
-    year_filter = 2023  
-    content_pedagogy_tests_name = "All" # Also can choose All if needed
+    content_pedagogy_tests_name = "All"
 
     columns = [
-        "ASEP Measure", 
-        "All", 
-        "Female", 
-        "Male", 
-        "African American", 
-        "Hispanic / Latino", 
-        "Other", 
+        "ASEP Measure",
+        "All",
+        "Female",
+        "Male",
+        "African American",
+        "Hispanic / Latino",
+        "Other",
         "White"
     ]
     asep_df = pd.DataFrame(columns=columns)
 
+    # ── Indicator weights ──
+    indicator_1a_weight = 4
+    indicator_1b_weight = 2
+    indicator_2_weight = 1
+    indicator_3_weight = 3
+    indicator_4a_weight = 3
+    indicator_4b_weight = 3
+    indicator_5_weight = 2
+
+    # ── Demographic group weights ──
+    demo_weight_all = 6
+    demo_weight_female = 1
+    demo_weight_male = 1
+    demo_weight_african_american = 1
+    demo_weight_hispanic_latino = 1
+    demo_weight_other = 1
+    demo_weight_white = 1
+
+    def weighted(value, *weights):
+        """
+        Multiply value by all given weights, but ONLY if value is a real number.
+        If value is blank / None / NaN / empty string / non-numeric, return the
+        literal string "<blank>" so pandas doesn't silently convert it to NaN
+        when stored in a numeric column.
+        """
+        if value is None:
+            return "<blank>"
+        if isinstance(value, str):
+            if value.strip() == "" or value.strip().lower() in ("<blank>", "nan", "none", "n/a"):
+                return "<blank>"
+        try:
+            num = float(value)
+        except (ValueError, TypeError):
+            return "<blank>"
+        if pd.isna(num):
+            return "<blank>"
+        result = num
+        for w in weights:
+            result *= w
+        return result
+
     # For Chapter3: indicator 1a
-    combined_df_1a, year_taken_1a = indicator_1a_data(first_two_attempt_data_1a_data, year_filter=year_filter)
-
-    # st.write(year_taken_1a)
-
     asep_df.loc[len(asep_df)] = [
-        "1a: Certification examination results for pedagogy tests ", # ASEP Measure
-        calculate_asep_indicator_1a(combined_df_1a, year_taken_1a)['year_taken'],                              # All
-        calculate_asep_indicator_1a(combined_df_1a[combined_df_1a['Gender'] == 'Female'], year_taken_1a)['year_taken'],                              # Female
-        calculate_asep_indicator_1a(combined_df_1a[combined_df_1a['Gender'] == 'Male'], year_taken_1a)['year_taken'],                              # Male
-        calculate_asep_indicator_1a(combined_df_1a[combined_df_1a['Race/Ethnicity'] == 'Black - African American'], year_taken_1a)['year_taken'],                              # African American
-        calculate_asep_indicator_1a(combined_df_1a[combined_df_1a['Race/Ethnicity'] == 'Hispanic - Latino'], year_taken_1a)['year_taken'],                              # Hispanic / Latino
-        calculate_asep_indicator_1a(combined_df_1a[~combined_df_1a['Race/Ethnicity'].isin(['Black - African American', 'Hispanic - Latino', 'White'])], year_taken_1a)['year_taken'],                              # Other
-        calculate_asep_indicator_1a(combined_df_1a[combined_df_1a['Race/Ethnicity'] == 'White'], year_taken_1a)['year_taken']                               # White
+        "1a: Certification examination results for pedagogy tests ",
+        weighted(calculate_asep_indicator_1a(first_two_attempt_data_1a_data, year_filter, 85), indicator_1a_weight, demo_weight_all),
+        weighted(calculate_asep_indicator_1a(first_two_attempt_data_1a_data[first_two_attempt_data_1a_data['Gender'] == 'Female'], year_filter, 85), indicator_1a_weight, demo_weight_female),
+        weighted(calculate_asep_indicator_1a(first_two_attempt_data_1a_data[first_two_attempt_data_1a_data['Gender'] == 'Male'], year_filter, 85), indicator_1a_weight, demo_weight_male),
+        weighted(calculate_asep_indicator_1a(first_two_attempt_data_1a_data[first_two_attempt_data_1a_data['Race/Ethnicity'] == 'Black - African American'], year_filter, 85), indicator_1a_weight, demo_weight_african_american),
+        weighted(calculate_asep_indicator_1a(first_two_attempt_data_1a_data[first_two_attempt_data_1a_data['Race/Ethnicity'] == 'Hispanic - Latino'], year_filter, 85), indicator_1a_weight, demo_weight_hispanic_latino),
+        weighted(calculate_asep_indicator_1a(first_two_attempt_data_1a_data[~first_two_attempt_data_1a_data['Race/Ethnicity'].isin(['Black - African American', 'Hispanic - Latino', 'White'])], year_filter, 85), indicator_1a_weight, demo_weight_other),
+        weighted(calculate_asep_indicator_1a(first_two_attempt_data_1a_data[first_two_attempt_data_1a_data['Race/Ethnicity'] == 'White'], year_filter, 85), indicator_1a_weight, demo_weight_white)
     ]
 
-    # # For Chapter3: indicator 1b
-    # combined_df_1b, year_taken = indicator_1b_data(first_two_attempt_data_1b_data, year_filter=year_filter, exam_name_filter=content_pedagogy_tests_name)
-
-    # asep_df.loc[len(asep_df)] = [
-    #     "1b: Certification examination results for content pedagogy tests ", # ASEP Measure
-    #     calculate_asep_indicator_1a(combined_df_1b)['Indicator 1a Pass Rate (%)'],                              # All
-    #     calculate_asep_indicator_1a(combined_df_1b[combined_df_1b['Gender'] == 'Female'])['Indicator 1a Pass Rate (%)'],                              # Female
-    #     calculate_asep_indicator_1a(combined_df_1b[combined_df_1b['Gender'] == 'Male'])['Indicator 1a Pass Rate (%)'],                              # Male
-    #     calculate_asep_indicator_1a(combined_df_1b[combined_df_1b['Race/Ethnicity'] == 'Black - African American'])['Indicator 1a Pass Rate (%)'],                              # African American
-    #     calculate_asep_indicator_1a(combined_df_1b[combined_df_1b['Race/Ethnicity'] == 'Hispanic - Latino'])['Indicator 1a Pass Rate (%)'],                              # Hispanic / Latino
-    #     calculate_asep_indicator_1a(combined_df_1b[~combined_df_1b['Race/Ethnicity'].isin(['Black - African American', 'Hispanic - Latino', 'White'])])['Indicator 1a Pass Rate (%)'],                              # Other
-    #     calculate_asep_indicator_1a(combined_df_1b[combined_df_1b['Race/Ethnicity'] == 'White'])['Indicator 1a Pass Rate (%)']                               # White
-    # ]
-
-    
-    # For Chapter 4:  Score should be 70% to sufficiently prepared 
-
-    filtered_copy_df, years_checked, total_records = chapter_4_group_aggregration(principal_dataset, year_filter)
-
+    # For Chapter3: indicator 1b
     asep_df.loc[len(asep_df)] = [
-    "Chapter 4 – Appraisal of First-Year Teachers by Administrators (Principal Survey)", # ASEP Measure
-    chapter_4_survey_summary(filtered_copy_df, principal_year_total)['value'],                              # All
-    chapter_4_survey_summary(filtered_copy_df[filtered_copy_df['Gender'] == 'Female'], principal_year_total)['value'],                              # Female
-    chapter_4_survey_summary(filtered_copy_df[filtered_copy_df['Gender'] == 'Male'], principal_year_total)['value'],                              # Male
-    chapter_4_survey_summary(filtered_copy_df[filtered_copy_df['Race/Ethnicity'] == 'Black - African American'], principal_year_total)['value'],                              # African American
-    chapter_4_survey_summary(filtered_copy_df[filtered_copy_df['Race/Ethnicity'] == 'Hispanic - Latino'], principal_year_total)['value'],                              # Hispanic / Latino
-    chapter_4_survey_summary(filtered_copy_df[~filtered_copy_df['Race/Ethnicity'].isin(['Black - African American', 'Hispanic - Latino', 'White'])], principal_year_total)['value'],                              # Other
-    chapter_4_survey_summary(filtered_copy_df[filtered_copy_df['Race/Ethnicity'] == 'White'], principal_year_total)['value']                               # White
+        "1b: Certification examination results for content pedagogy tests ",
+        weighted(calculate_asep_indicator_1b(first_two_attempt_data_1b_data, year_filter, 80), indicator_1b_weight, demo_weight_all),
+        weighted(calculate_asep_indicator_1b(first_two_attempt_data_1b_data[first_two_attempt_data_1b_data['Gender'] == 'Female'], year_filter, 80), indicator_1b_weight, demo_weight_female),
+        weighted(calculate_asep_indicator_1b(first_two_attempt_data_1b_data[first_two_attempt_data_1b_data['Gender'] == 'Male'], year_filter, 80), indicator_1b_weight, demo_weight_male),
+        weighted(calculate_asep_indicator_1b(first_two_attempt_data_1b_data[first_two_attempt_data_1b_data['Race/Ethnicity'] == 'Black - African American'], year_filter, 80), indicator_1b_weight, demo_weight_african_american),
+        weighted(calculate_asep_indicator_1b(first_two_attempt_data_1b_data[first_two_attempt_data_1b_data['Race/Ethnicity'] == 'Hispanic - Latino'], year_filter, 80), indicator_1b_weight, demo_weight_hispanic_latino),
+        weighted(calculate_asep_indicator_1b(first_two_attempt_data_1b_data[~first_two_attempt_data_1b_data['Race/Ethnicity'].isin(['Black - African American', 'Hispanic - Latino', 'White'])], year_filter, 80), indicator_1b_weight, demo_weight_other),
+        weighted(calculate_asep_indicator_1b(first_two_attempt_data_1b_data[first_two_attempt_data_1b_data['Race/Ethnicity'] == 'White'], year_filter, 80), indicator_1b_weight, demo_weight_white)
     ]
 
-
-    # For Chapter 5: 2024-2025 and 2025-2026 academic years, the performance standard shall be 60%, 2026-2027 academic year, the performance standard shall be 65%, 2027-2028 academic year, the performance standard shall be 70%
-
-    student_growth_data = student_growth_data[student_growth_data["Data Year"] == year_filter]
-
+    # For Chapter 4: Principal survey
     asep_df.loc[len(asep_df)] = [
-    "Chapter 5 – Improvement in Student Achievement of Students Taught by Beginning Teachers", # ASEP Measure
-    chapter_5_summary(student_growth_data)['pct_meeting_standard'],                              # All
-    chapter_5_summary(student_growth_data[student_growth_data['Gender_x'] == 'Female'])['pct_meeting_standard'],                              # Female
-    chapter_5_summary(student_growth_data[student_growth_data['Gender_x'] == 'Male'])['pct_meeting_standard'],                              # Male
-    chapter_5_summary(student_growth_data[student_growth_data['Race/Ethnicity'] == 'Black - African American'])['pct_meeting_standard'],                              # African American
-    chapter_5_summary(student_growth_data[student_growth_data['Race/Ethnicity'] == 'Hispanic - Latino'])['pct_meeting_standard'],                              # Hispanic / Latino
-    chapter_5_summary(student_growth_data[~student_growth_data['Race/Ethnicity'].isin(['Black - African American', 'Hispanic - Latino', 'White'])])['pct_meeting_standard'],                              # Other
-    chapter_5_summary(student_growth_data[student_growth_data['Race/Ethnicity'] == 'White'])['pct_meeting_standard']                               # White
+        "2: Principal survey ",
+        weighted(calculate_asep_chapter_4(principal_dataset, year_filter, 70), indicator_2_weight, demo_weight_all),
+        weighted(calculate_asep_chapter_4(principal_dataset[principal_dataset['Gender'] == 'Female'], year_filter, 70), indicator_2_weight, demo_weight_female),
+        weighted(calculate_asep_chapter_4(principal_dataset[principal_dataset['Gender'] == 'Male'], year_filter, 70), indicator_2_weight, demo_weight_male),
+        weighted(calculate_asep_chapter_4(principal_dataset[principal_dataset['Race/Ethnicity'] == 'Black - African American'], year_filter, 70), indicator_2_weight, demo_weight_african_american),
+        weighted(calculate_asep_chapter_4(principal_dataset[principal_dataset['Race/Ethnicity'] == 'Hispanic - Latino'], year_filter, 70), indicator_2_weight, demo_weight_hispanic_latino),
+        weighted(calculate_asep_chapter_4(principal_dataset[~principal_dataset['Race/Ethnicity'].isin(['Black - African American', 'Hispanic - Latino', 'White'])], year_filter, 70), indicator_2_weight, demo_weight_other),
+        weighted(calculate_asep_chapter_4(principal_dataset[principal_dataset['Race/Ethnicity'] == 'White'], year_filter, 70), indicator_2_weight, demo_weight_white)
     ]
 
-
-    # For Chapter 6: Indicator 4a = 95% 19 TAC §229.4(a)(4)
-
-    # Dynamically build the academic year string (e.g., 2026 -> "2025-2026")
-    target_academic_year = f"{int(year_filter) - 1}-{year_filter}"
-
-    field_supervision_dataset = field_supervision_dataset[field_supervision_dataset["filter_year"] == target_academic_year]
-
-    # asep_df.loc[len(asep_df)] = [
-    # "4a: Frequency and duration of field observations ", # ASEP Measure
-    # field_supervision_dataset(field_supervision_dataset)['pct_meeting_standard'],                              # All
-    # field_supervision_dataset(field_supervision_dataset[field_supervision_dataset['Gender_x'] == 'Female'])['pct_meeting_standard'],                              # Female
-    # field_supervision_dataset(field_supervision_dataset[field_supervision_dataset['Gender_x'] == 'Male'])['pct_meeting_standard'],                              # Male
-    # field_supervision_dataset(field_supervision_dataset[field_supervision_dataset['Race/Ethnicity'] == 'Black - African American'])['pct_meeting_standard'],                              # African American
-    # field_supervision_dataset(field_supervision_dataset[field_supervision_dataset['Race/Ethnicity'] == 'Hispanic - Latino'])['pct_meeting_standard'],                              # Hispanic / Latino
-    # field_supervision_dataset(field_supervision_dataset[~field_supervision_dataset['Race/Ethnicity'].isin(['Black - African American', 'Hispanic - Latino', 'White'])])['pct_meeting_standard'],                              # Other
-    # field_supervision_dataset(field_supervision_dataset[field_supervision_dataset['Race/Ethnicity'] == 'White'])['pct_meeting_standard']                               # White
-    # ]
-
-
-
-    # For Chapter 7:  Score should be 70% to sufficiently prepared 
-
-    filtered_copy_df, years_checked, total_records = chapter_4_group_aggregration(teacher_survey_dataset, year_filter)
+    # For Chapter 5: student growth
+    if year_filter == 2025 or year_filter == 2026:
+        growth_score_percentage = 60
+    elif year_filter == 2027:
+        growth_score_percentage = 65
+    else:
+        growth_score_percentage = 70
 
     asep_df.loc[len(asep_df)] = [
-    "Chapter 7 – Evaluation of Educator Preparation Programs by Teachers (Teacher Survey) ", # ASEP Measure
-    chapter_4_survey_summary(filtered_copy_df, principal_year_total)['value'],                              # All
-    chapter_4_survey_summary(filtered_copy_df[filtered_copy_df['Gender'] == 'Female'], principal_year_total)['value'],                              # Female
-    chapter_4_survey_summary(filtered_copy_df[filtered_copy_df['Gender'] == 'Male'], principal_year_total)['value'],                              # Male
-    chapter_4_survey_summary(filtered_copy_df[filtered_copy_df['Race/Ethnicity'] == 'Black - African American'], principal_year_total)['value'],                              # African American
-    chapter_4_survey_summary(filtered_copy_df[filtered_copy_df['Race/Ethnicity'] == 'Hispanic - Latino'], principal_year_total)['value'],                              # Hispanic / Latino
-    chapter_4_survey_summary(filtered_copy_df[~filtered_copy_df['Race/Ethnicity'].isin(['Black - African American', 'Hispanic - Latino', 'White'])], principal_year_total)['value'],                              # Other
-    chapter_4_survey_summary(filtered_copy_df[filtered_copy_df['Race/Ethnicity'] == 'White'], principal_year_total)['value']                               # White
+        "3: Improvement in student achievement of students taught by beginning teachers ",
+        weighted(chapter_5_calculation(student_growth_data, year_filter, growth_score_percentage), indicator_3_weight, demo_weight_all),
+        weighted(chapter_5_calculation(student_growth_data[student_growth_data['Gender_x'] == 'Female'], year_filter, growth_score_percentage), indicator_3_weight, demo_weight_female),
+        weighted(chapter_5_calculation(student_growth_data[student_growth_data['Gender_x'] == 'Male'], year_filter, growth_score_percentage), indicator_3_weight, demo_weight_male),
+        weighted(chapter_5_calculation(student_growth_data[student_growth_data['Race/Ethnicity'] == 'Black - African American'], year_filter, growth_score_percentage), indicator_3_weight, demo_weight_african_american),
+        weighted(chapter_5_calculation(student_growth_data[student_growth_data['Race/Ethnicity'] == 'Hispanic - Latino'], year_filter, growth_score_percentage), indicator_3_weight, demo_weight_hispanic_latino),
+        weighted(chapter_5_calculation(student_growth_data[~student_growth_data['Race/Ethnicity'].isin(['Black - African American', 'Hispanic - Latino', 'White'])], year_filter, growth_score_percentage), indicator_3_weight, demo_weight_other),
+        weighted(chapter_5_calculation(student_growth_data[student_growth_data['Race/Ethnicity'] == 'White'], year_filter, growth_score_percentage), indicator_3_weight, demo_weight_white),
     ]
 
-    st.table(asep_df)
+    # For Chapter 6: Indicator 4a
+    field_supervision_percentage = 95
+    asep_df.loc[len(asep_df)] = [
+        "4a: Frequency and duration of field observations ",
+        weighted(chapter_4a_calculation(field_supervision_dataset, year_filter, field_supervision_percentage), indicator_4a_weight, demo_weight_all),
+        weighted(chapter_4a_calculation(field_supervision_dataset[field_supervision_dataset['Gender'] == 'F'], year_filter, field_supervision_percentage), indicator_4a_weight, demo_weight_female),
+        weighted(chapter_4a_calculation(field_supervision_dataset[field_supervision_dataset['Gender'] == 'M'], year_filter, field_supervision_percentage), indicator_4a_weight, demo_weight_male),
+        weighted(chapter_4a_calculation(field_supervision_dataset[field_supervision_dataset['Ethnicity'] == 'Black/African Amer'], year_filter, field_supervision_percentage), indicator_4a_weight, demo_weight_african_american),
+        weighted(chapter_4a_calculation(field_supervision_dataset[field_supervision_dataset['Ethnicity'] == 'Hispanic/Latino'], year_filter, field_supervision_percentage), indicator_4a_weight, demo_weight_hispanic_latino),
+        weighted(chapter_4a_calculation(field_supervision_dataset[~field_supervision_dataset['Ethnicity'].isin(['Black/African Amer', 'Hispanic/Latino', 'White'])], year_filter, field_supervision_percentage), indicator_4a_weight, demo_weight_other),
+        weighted(chapter_4a_calculation(field_supervision_dataset[field_supervision_dataset['Ethnicity'] == 'White'], year_filter, field_supervision_percentage), indicator_4a_weight, demo_weight_white)
+    ]
 
+    # For Chapter 6: Indicator 4b
+    asep_df.loc[len(asep_df)] = [
+        "4b: Quality of field supervision ",
+        weighted(chapter_4b_calculation(field_supervision_dataset, year_filter, field_supervision_percentage), indicator_4b_weight, demo_weight_all),
+        weighted(chapter_4b_calculation(field_supervision_dataset[field_supervision_dataset['Gender'] == 'F'], year_filter, field_supervision_percentage), indicator_4b_weight, demo_weight_female),
+        weighted(chapter_4b_calculation(field_supervision_dataset[field_supervision_dataset['Gender'] == 'M'], year_filter, field_supervision_percentage), indicator_4b_weight, demo_weight_male),
+        weighted(chapter_4b_calculation(field_supervision_dataset[field_supervision_dataset['Ethnicity'] == 'Black/African Amer'], year_filter, field_supervision_percentage), indicator_4b_weight, demo_weight_african_american),
+        weighted(chapter_4b_calculation(field_supervision_dataset[field_supervision_dataset['Ethnicity'] == 'Hispanic/Latino'], year_filter, field_supervision_percentage), indicator_4b_weight, demo_weight_hispanic_latino),
+        weighted(chapter_4b_calculation(field_supervision_dataset[~field_supervision_dataset['Ethnicity'].isin(['Black/African Amer', 'Hispanic/Latino', 'White'])], year_filter, field_supervision_percentage), indicator_4b_weight, demo_weight_other),
+        weighted(chapter_4b_calculation(field_supervision_dataset[field_supervision_dataset['Ethnicity'] == 'White'], year_filter, field_supervision_percentage), indicator_4b_weight, demo_weight_white)
+    ]
 
+    # For Chapter 7a: Teacher survey
+    asep_df.loc[len(asep_df)] = [
+        "5: Teacher Survey ",
+        weighted(calculate_asep_chapter_4(teacher_survey_dataset, year_filter, 70), indicator_5_weight, demo_weight_all),
+        weighted(calculate_asep_chapter_4(teacher_survey_dataset[teacher_survey_dataset['Gender'] == 'Female'], year_filter, 70), indicator_5_weight, demo_weight_female),
+        weighted(calculate_asep_chapter_4(teacher_survey_dataset[teacher_survey_dataset['Gender'] == 'Male'], year_filter, 70), indicator_5_weight, demo_weight_male),
+        weighted(calculate_asep_chapter_4(teacher_survey_dataset[teacher_survey_dataset['Race/Ethnicity'] == 'Black - African American'], year_filter, 70), indicator_5_weight, demo_weight_african_american),
+        weighted(calculate_asep_chapter_4(teacher_survey_dataset[teacher_survey_dataset['Race/Ethnicity'] == 'Hispanic - Latino'], year_filter, 70), indicator_5_weight, demo_weight_hispanic_latino),
+        weighted(calculate_asep_chapter_4(teacher_survey_dataset[~teacher_survey_dataset['Race/Ethnicity'].isin(['Black - African American', 'Hispanic - Latino', 'White'])], year_filter, 70), indicator_5_weight, demo_weight_other),
+        weighted(calculate_asep_chapter_4(teacher_survey_dataset[teacher_survey_dataset['Race/Ethnicity'] == 'White'], year_filter, 70), indicator_5_weight, demo_weight_white)
+    ]
 
+    # Safety net: replace any leftover NaN with visible "<blank>" text before display
+    asep_df = asep_df.fillna("<blank>")
+    st.markdown(asep_df.to_html(index=False), unsafe_allow_html=True)
+
+    # ── Total ASEP Index Score ──
+    # Sum every numeric cell across the WHOLE table (all demographic columns, all chapter rows).
+    # Blank / None / NaN / non-numeric cells are simply skipped, not treated as 0-that-gets-multiplied.
+    # ── Total ASEP Index Score ──
+    value_columns = ["All", "Female", "Male", "African American", "Hispanic / Latino", "Other", "White"]
+    total_asep_score = pd.to_numeric(
+        asep_df[value_columns].stack(), errors='coerce'
+    ).sum()
+
+    st.write(f"**Total ASEP Index Score (sum of all table values):** {total_asep_score}")
+    asep_index_score_value = round((total_asep_score / 182)*100, 2)
+    st.write(f"**ASEP Index Score:** {asep_index_score_value}")
+
+    # ══════════════════════════════════════════
+    # ASEP Index Score Gauge (Ch.5 style theme)
+    # ══════════════════════════════════════════
+    st.markdown("---")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.caption(
+            "🟢 Green = 85% or more  |  🟡 Yellow = 80% to less than 85%  |  🔴 Red = Below 80%. "
+            f"(Current ASEP Index Score: {asep_index_score_value}%)"
+        )
+
+        if asep_index_score_value >= 85:
+            gauge_color = GREEN
+        elif asep_index_score_value >= 80:
+            gauge_color = YELLOW
+        else:
+            gauge_color = RED
+
+        fig_gauge = go.Figure(
+            go.Indicator(
+                mode="gauge+number",
+                value=asep_index_score_value,
+                number=dict(
+                    font=dict(size=52, color="white"),
+                    suffix="%",
+                ),
+                domain={"x": [0, 1], "y": [0, 1]},
+                gauge={
+                    "axis": {"range": [0, 100], "tickwidth": 1, "tickcolor": "darkblue"},
+                    "bar": {"color": gauge_color},
+                    "bgcolor": "white",
+                    "borderwidth": 2,
+                    "bordercolor": "gray",
+                    "steps": [
+                        {"range": [0, 80],   "color": "#000000"},
+                        {"range": [80, 85],  "color": "#000000"},
+                        {"range": [85, 100], "color": "#000000"},
+                    ],
+                },
+            )
+        )
+        fig_gauge.update_layout(height=300, margin=dict(t=30, b=10))
+        st.plotly_chart(fig_gauge, use_container_width=True)
 
 # ─────────────────────────────────────────────
 # STUDENT GROWTH TAB
@@ -485,6 +582,40 @@ def exam_pass_rate_tab(df):
     st.subheader("🏆 Indicator 1: Certification Exam Pass Rates")
     
 
+def Feedback():
+    import streamlit as st
+    import streamlit.components.v1 as components
+
+    st.set_page_config(layout="wide")
+
+    # st.title("📬 Submit Dashboard Feedback")
+    # st.markdown("""
+    # Please use the form below to report any **errors**, suggest **changes**, or request future **updates**. 
+    # Your input helps improve the local dashboard experience!
+    # """)
+
+    # 1. Increased the iframe height property to 1200px
+    ms_form_iframe = """
+    <iframe src="https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=X505YZwk0ESyca3Ch_Mj_8Qon6bq6RdOvMeTNsPMoKRUMEtZRE85U05NTlFQNzZCVzI3Rjk3VVRXSy4u&embed=true" 
+        width="100%" 
+            height="1200px" 
+            frameborder="0" 
+            marginwidth="0" 
+            marginheight="0" 
+            style="border: none; max-width:100%; min-height: 1200px; background: transparent;" 
+            allowfullscreen 
+            webkitallowfullscreen 
+            mozallowfullscreen 
+            msallowfullscreen>
+        </iframe>
+    """
+
+    col1, col2, col3 = st.columns([1, 4, 1])
+
+    with col2:
+        # 2. CRUCIAL: Increased the Streamlit component container height to 1250px 
+        # to perfectly match the iframe and prevent clipping.
+        components.html(ms_form_iframe, height=1250, scrolling=True)
 
 # ─────────────────────────────────────────────
 # DASHBOARD PAGE
@@ -492,29 +623,47 @@ def exam_pass_rate_tab(df):
 def Dashboard():
     st.title("📊 ASEP Metrics Dashboard")
     st.caption(
-        "Alternative Student Educator Preparation (ASEP) program metrics — "
-        "Certification Pass Rates · Principal Appraisals · Student Growth"
+        "Alternative Student Educator Preparation (ASEP) program metrics"
     )
 
     if not st.session_state.get("uploaded_files"):
         st.warning("Please upload Excel files in the Data Management page first.")
         return
 
-    data = {"principal_perception": None, "educator_details": None, "student_growth": None, "new_teacher_survey": None, "exam_roaster": None, "observation_data": None}
+    data = {
+        "principal_perception": None,
+        "educator_details": None,
+        "student_growth": None,
+        "new_teacher_survey": None,
+        "exam_roaster": None,
+        "observation_data": None,
+        "main_finisher_data": None,
+    }
+
+    NAME_TO_KEY = {
+        "academic_year_principal_perceptions": "principal_perception",
+        "educator_details_with_emp_start_date": "educator_details",
+        "academic_year_average_student_growth_by_candidate": "student_growth",
+        "new_teacher_perceptions_by_candidate": "new_teacher_survey",
+        "exam_roaster_data": "exam_roaster",
+        "observation_df": "observation_data",
+        "main_finisher_data": "main_finisher_data",
+    }
+
+    # 1. Process every uploaded file once, group results by output name
+    grouped = {}
     for uploaded_file in st.session_state.uploaded_files:
         new_name, df = process_and_rename_file(uploaded_file)
-        if new_name == "academic_year_principle_perceptions":
-            data["principal_perception"] = df
-        elif new_name == "educator_details_with_emp_start_date":
-            data["educator_details"] = df
-        elif new_name == "academic_year_average_student_growth_by_candidate":
-            data["student_growth"] = df
-        elif new_name == 'new_teacher_perceptions_by_candidate':
-            data['new_teacher_survey'] = df
-        elif new_name == 'exam_roaster_data':
-            data['exam_roaster'] = df
-        elif new_name == 'observation_df':
-            data['observation_data'] = df
+        grouped.setdefault(new_name, []).append(df)
+
+    # 2. Concat any name that has multiple files behind it (e.g. multi-year
+    #    Finisher files), otherwise just use the single df
+    for new_name, dfs in grouped.items():
+        key = NAME_TO_KEY.get(new_name)
+        if key is None:
+            continue  # unrecognized schema, skip
+        merged_df = pd.concat(dfs, ignore_index=True) if len(dfs) > 1 else dfs[0]
+        data[key] = merged_df
 
     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
         ["Chapter 3", "Chapter 4", "Chapter 5", "Chapter 6", "Chapter 7", "Chapter 8"]
@@ -523,8 +672,8 @@ def Dashboard():
     first_two_attempt_data_1b_data = None
     principal_dataset = None
     teacher_survey_dataset = None
+    student_growth_data = None
     field_supervision_dataset = None
-    principal_year_total = None
     
     with tab1:
         if data["exam_roaster"] is not None and data['educator_details'] is not None:
@@ -535,17 +684,14 @@ def Dashboard():
             elif data['educator_details'] is not None:
                 st.info("⚠️ Please upload a Examinee Roster file first.")
 
-
     with tab2:
         if data["principal_perception"] is not None and data['educator_details'] is not None:
-            principal_dataset, principal_year_total = principal_perceptions(data["principal_perception"], data["educator_details"])
+            principal_dataset = principal_perceptions(data["principal_perception"], data["educator_details"])
         else:
             if data["principal_perception"] is not None:
                 st.info("⚠️ Please upload a Educator Details file first.")
             elif data['educator_details'] is not None:
                 st.info("⚠️ Please upload a Principal Perceptions file first.")
-
-            
 
     with tab3:
         if data["educator_details"] is not None and data['student_growth'] is not None:
@@ -557,10 +703,14 @@ def Dashboard():
                 st.info("⚠️ Please upload a Educator Details file first.")
 
     with tab4:
-        if data['observation_data'] is not None:
-            field_supervision_dataset = field_supervision(data['observation_data'])
+        if data['observation_data'] is not None and data['main_finisher_data'] is not None:
+            # st.write(len(data['main_finisher_data']))
+            field_supervision_dataset = field_supervision(data['observation_data'], data['main_finisher_data'])
         else:
-            st.info("⚠️ Please upload a Observations Data file first.")
+            if data["observation_data"] is not None:
+                st.info("⚠️ Please upload a Main Finisher file first.")
+            elif data['main_finisher_data'] is not None:
+                st.info("⚠️ Please upload a Observations Data file first.")
 
     with tab5:
         if data["new_teacher_survey"] is not None and data['educator_details'] is not None:
@@ -572,14 +722,60 @@ def Dashboard():
                 st.info("⚠️ Please upload a New Teacher Survey file first.")
 
     with tab6:
-        if first_two_attempt_data_1a_data is not None and first_two_attempt_data_1b_data is not None and principal_dataset is not None and teacher_survey_dataset is not None and student_growth_data is not None and field_supervision_dataset is not None and principal_year_total is not None:
-            asep_index_score(first_two_attempt_data_1a_data, first_two_attempt_data_1b_data, principal_dataset, teacher_survey_dataset, student_growth_data, field_supervision_dataset, principal_year_total)
-            
-            # You can now calculate cumulative logic, merge files, or perform 
-            # ASEP index score math using these dataframes here.
+        if first_two_attempt_data_1a_data is not None and first_two_attempt_data_1b_data is not None and principal_dataset is not None and teacher_survey_dataset is not None and student_growth_data is not None and field_supervision_dataset is not None:
+            asep_index_score(first_two_attempt_data_1a_data, first_two_attempt_data_1b_data, principal_dataset, teacher_survey_dataset, student_growth_data, field_supervision_dataset)
         else:
             st.info("⚠️ Please ensure the required files are uploaded to populate this tab.")
     
+
+import base64
+
+def About_us():
+    # Centered logo (properly centered via HTML/CSS)
+    with open("images/company_logo.png", "rb") as img_file:
+        logo_base64 = base64.b64encode(img_file.read()).decode()
+
+    st.markdown(
+        f"""
+        <div style="text-align: center;">
+            <img src="data:image/png;base64,{logo_base64}" width="300">
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.markdown("---")
+
+    st.markdown(
+        """
+        <h4>Website Created By</h4>
+        <ul style="line-height: 1.8; font-size: 18px;">
+            <li>Taksh Beladiya</li>
+            <li>Jeremy Martin</li>
+            <li>Badgett Kevin</li>
+            <li>Marder Michael P.</li>
+            <li>Michelle Lowry</li>
+        </ul>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.markdown("---")
+
+    st.markdown(
+        """
+        <div style="background-color: #262730; padding: 20px; border-radius: 10px; text-align: center; border: 1px solid #3d3d3d;">
+            <h4 style="color: #ffffff;">🎓 Special Thanks</h4>
+            <p style="color: #dddddd; font-size: 18px;">
+                We would like to extend our sincere gratitude to the
+                <strong>University of Texas at Arlington</strong> for their
+                partnership and support in making this project possible.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
 
 
 # ─────────────────────────────────────────────
@@ -594,7 +790,7 @@ def main():
 
 
     sidebar_data()
-    pg = st.navigation([Data_Management, Dashboard])
+    pg = st.navigation([Data_Management, Dashboard, About_us, Feedback])
     pg.run()
 
 
