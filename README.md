@@ -6,15 +6,27 @@ A Streamlit web application for calculating and visualizing **Alternative Studen
 
 ## 🧭 Table of Contents
 
+- [Background](#-background)
 - [Overview](#-overview)
 - [Pages](#-pages)
 - [Datasets Required](#-datasets-required)
 - [Getting Started](#-getting-started)
 - [How to Use the App](#-how-to-use-the-app)
+- [Data Security](#-data-security)
 - [Project Structure](#-project-structure)
 - [Tech Stack](#-tech-stack)
 - [Contributing / Feedback](#-contributing--feedback)
+- [I2I Workgroup Members](#-i2i-workgroup-members)
+- [Contact](#-contact)
 - [Credits](#-credits)
+
+---
+
+## 📖 Background
+
+The ASEP Data Dashboard was developed in support of the [UT System's ElevateTXed initiative](https://elevatetxed.utsystem.edu/). It was envisioned and collaboratively designed by the I2I Data Workgroup (members below). The primary goal of this project is to enhance the capacity of educator preparation programs (EPPs) to use data for continuous improvement, informed decision-making, and alignment with state accountability metrics.
+
+This software allows users to securely upload raw data files from multiple TEA sources — including I2I, ECOS, ResultsAnalyzer, and others — and automatically convert those files into EPP-specific dashboards in alignment with the [24-25 Texas Accountability System for Educator Preparation Manual](https://tea.texas.gov/educators/preparation-and-continuing-education/consumer-information-about-educator-preparation-programs/24-25-asep-manual.pdf). The intent of this dashboard is to aggregate these disparate data sources into a unified environment, directly aligned with ASEP standards, using real-time, student-level data. Our hope is that this tool will enable EPPs to monitor progress on accountability benchmarks and serve as an early warning system to identify areas of strength and risk.
 
 ---
 
@@ -35,7 +47,7 @@ This dashboard automates the process of calculating ASEP compliance metrics for 
 |---|---|
 | **📁 Data Management** | Upload raw dataset files. The app detects and renames each file automatically so the rest of the dashboard can recognize it. Includes a downloadable PDF guide and renamed-file download option. |
 | **📊 Dashboard** | Tabbed view (Chapter 3–8) showing calculated metrics for each ASEP indicator, culminating in the combined ASEP Index Score in Chapter 8. |
-| **ℹ️ About Us** | Info about the team, a description of each page, and a step-by-step navigation guide. |
+| **ℹ️ About Us** | Background on the project, data security info, the I2I Workgroup, and a step-by-step navigation guide. |
 | **💬 Feedback** | Embedded Microsoft Forms widget for reporting bugs, requesting features, or submitting general feedback. |
 
 > The app opens on the **About Us** page by default so new users see the navigation guide first.
@@ -114,6 +126,14 @@ The app will open automatically in your browser at `http://localhost:8501`.
 
 ---
 
+## 🔒 Data Security
+
+When running the desktop version of this application, data files will never leave your hard drive. The software is designed to run entirely locally so that private student information never leaves the environment from which it was originally downloaded. The software neither operates nor stores data in any environment other than where you originally downloaded the files.
+
+If you are unable to run the desktop version, we have developed a [Streamlit](https://asepdashboard-kqt5fwct9wzlnxgqnf2qsb.streamlit.app/) site that allows users to access the tool from a browser. Streamlit is [SOC 2 Type 1 compliant](https://discuss.streamlit.io/t/streamlit-cloud-is-now-soc-2-type-1-compliant/20850), and more information on their security practices is available [here](https://docs.streamlit.io/deploy/streamlit-community-cloud/get-started/trust-and-security).
+
+---
+
 ## 🗄️ Project Structure
 
 ```
@@ -140,13 +160,28 @@ Found a bug or have a feature request? Use the **Feedback** page inside the app,
 
 ---
 
-## 🎓 Credits
+## 👥 I2I Workgroup Members
 
-**Built by:**
-- Taksh Beladiya
-- Jeremy Martin
-- Badgett Kevin
-- Marder Michael P.
-- Michelle Lowry
+The workgroup was initiated by the UT System's ElevateTXed initiative and has evolved to include participants from multiple institutions and systems, reflecting its broader statewide scope:
+
+- **Taksh Beladiya** — Graduate Research Assistant, The University of Texas System
+- **Kevin Badgett** — Dean, College of Education, Sul Ross State University
+- **Michelle Lowry** — Senior Software Developer/Analyst, UTeach, The University of Texas at Austin
+- **Michael Marder** — Executive Director, UTeach Natural Sciences, The University of Texas at Austin
+- **Jeremy Martin** — Senior Research & Policy Analyst, The University of Texas System
+- **Emma Savage-Davis** — Dean, College of Education and Human Development, TAMU-San Antonio
+- **Robin Kapavik** — Associate Dean, College of Education and Human Development, TAMU-San Antonio
+
+---
+
+## ✉️ Contact
+
+For questions or comments, please contact Jeremy Martin at [jemartin@utsystem.edu](mailto:jemartin@utsystem.edu).
+
+For source code and pull requests, please visit Taksh Beladiya's GitHub page at [github.com/takshb21/asep_dashboard](https://github.com/takshb21/asep_dashboard).
+
+---
+
+## 🎓 Credits
 
 **Special thanks** to the **University of Texas at Arlington** for their partnership and support in making this project possible.
