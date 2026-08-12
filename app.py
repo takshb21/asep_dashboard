@@ -623,7 +623,7 @@ def Feedback():
 def Dashboard():
     st.title("📊 ASEP Metrics Dashboard")
     st.caption(
-        "Alternative Student Educator Preparation (ASEP) program metrics"
+        "Accountability System for Educator Preparation (ASEP) program metrics"
     )
 
     if not st.session_state.get("uploaded_files"):
