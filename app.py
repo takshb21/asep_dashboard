@@ -623,7 +623,7 @@ def Feedback():
 def Dashboard():
     st.title("📊 ASEP Metrics Dashboard")
     st.caption(
-        "Accountability System for Educator Preparation (ASEP) program metrics"
+        "Alternative Student Educator Preparation (ASEP) program metrics"
     )
 
     if not st.session_state.get("uploaded_files"):
@@ -729,7 +729,6 @@ def Dashboard():
     
 
 import base64
-
 def About_us():
     # Centered logo (properly centered via HTML/CSS)
     with open("images/company_logo.png", "rb") as img_file:
@@ -746,30 +745,55 @@ def About_us():
 
     st.markdown("---")
 
+    # ---------------- Background ----------------
     st.markdown(
         """
-        <h4>Created By</h4>
-        <ul style="line-height: 1.8; font-size: 18px;">
-            <li>Taksh Beladiya</li>
-            <li>Jeremy Martin</li>
-            <li>Badgett Kevin</li>
-            <li>Marder Michael P.</li>
-            <li>Michelle Lowry</li>
-        </ul>
+        <h4>📖 Background</h4>
+        <p style="line-height: 1.7; font-size: 17px; color: #E6EDF3;">
+            The ASEP Data Dashboard was developed in support of the
+            <a href="https://elevatetxed.utsystem.edu/" target="_blank">UT System's ElevateTXed initiative</a>.
+            The ASEP Data Dashboard was envisioned and collaboratively designed by the
+            I2I Data Workgroup (members below). The primary goal of this project is to enhance
+            the capacity of educator preparation programs (EPPs) to use data for continuous
+            improvement, informed decision-making, and alignment with state accountability metrics.
+        </p>
+        <p style="line-height: 1.7; font-size: 17px; color: #E6EDF3;">
+            This software will allow users to securely upload raw data files from multiple TEA
+            sources, including I2I, ECOS, ResultsAnalyzer, and others, and automatically convert
+            those files into EPP-specific dashboards in alignment with the
+            <a href="https://tea.texas.gov/educators/preparation-and-continuing-education/consumer-information-about-educator-preparation-programs/24-25-asep-manual.pdf" target="_blank">
+            24-25 Texas Accountability System for Educator Preparation Manual</a>.
+            The intent of this dashboard is to aggregate these disparate data sources into a
+            unified environment, directly aligned with ASEP standards, using real-time,
+            student-level data. Our hope is that this tool will enable EPPs to monitor progress
+            on accountability benchmarks and serve as an early warning system to identify areas
+            of strength and risk.
+        </p>
         """,
         unsafe_allow_html=True
     )
 
     st.markdown("---")
 
+    # ---------------- Data Security ----------------
     st.markdown(
         """
-        <div style="background-color: #262730; padding: 20px; border-radius: 10px; text-align: center; border: 1px solid #3d3d3d;">
-            <h4 style="color: #ffffff;">🎓 Special Thanks</h4>
-            <p style="color: #dddddd; font-size: 18px;">
-                We would like to extend our sincere gratitude to the
-                <strong>University of Texas at Arlington</strong> for their
-                partnership and support in making this project possible.
+        <div style="background-color: #262730; padding: 20px; border-radius: 10px; border: 1px solid #3d3d3d;">
+            <h4 style="color: #ffffff;">🔒 Data Security</h4>
+            <p style="color: #dddddd; font-size: 17px; line-height: 1.7;">
+                When running the desktop version of this application, data files will never leave
+                your hard drive. The software is designed to run entirely locally so that private
+                student information never leaves the environment from which it was originally
+                downloaded. The software neither operates nor stores data in any environment other
+                than where you originally downloaded the files.
+            </p>
+            <p style="color: #dddddd; font-size: 17px; line-height: 1.7;">
+                If you are unable to run the desktop version, we have developed a
+                <a href="https://asepdashboard-kqt5fwct9wzlnxgqnf2qsb.streamlit.app/" target="_blank">Streamlit</a>
+                site that will allow users to access the tool from a browser. Streamlit is
+                <a href="https://discuss.streamlit.io/t/streamlit-cloud-is-now-soc-2-type-1-compliant/20850" target="_blank">SOC 2 Type 1 compliant</a>,
+                and more information on their security practices is available
+                <a href="https://docs.streamlit.io/deploy/streamlit-community-cloud/get-started/trust-and-security" target="_blank">here</a>.
             </p>
         </div>
         """,
@@ -778,14 +802,23 @@ def About_us():
 
     st.markdown("---")
 
+    # ---------------- I2I Workgroup Members ----------------
     st.markdown(
         """
-        <h4>📌 What Each Page Does</h4>
-        <ul style="line-height: 1.8; font-size: 17px;">
-            <li><strong>📁 Data Management</strong> — Upload your raw dataset files (Educator Details, Exam Roster, Principal Perception, Student Growth, Observation, Finishers, New Teacher Survey). The app auto-detects and renames each file so the dashboard can recognize it, and lets you download the renamed versions.</li>
-            <li><strong>📊 Dashboard</strong> — View calculated metrics across Chapters 3–8 (exam pass rates, principal perceptions, student growth, field supervision, teacher survey results, and the final ASEP Index Score), organized into tabs.</li>
-            <li><strong>ℹ️ About Us</strong> — Info about the team behind this dashboard and how to use the site (this page).</li>
-            <li><strong>💬 Feedback</strong> — Report errors, suggest changes, or request new features using the built-in form.</li>
+        <h4>👥 I2I Workgroup Members</h4>
+        <p style="line-height: 1.7; font-size: 17px; color: #E6EDF3;">
+            The workgroup was initiated by the UT System's ElevateTXed initiative and has evolved
+            to include participants from multiple institutions and systems, reflecting its
+            broader statewide scope:
+        </p>
+        <ul style="line-height: 1.9; font-size: 17px; color: #E6EDF3;">
+            <li><strong>Taksh Beladiya</strong> — Graduate Research Assistant, The University of Texas System</li>
+            <li><strong>Kevin Badgett</strong> — Dean, College of Education, Sul Ross State University</li>
+            <li><strong>Michelle Lowry</strong> — Senior Software Developer/Analyst, UTeach, The University of Texas at Austin</li>
+            <li><strong>Michael Marder</strong> — Executive Director, UTeach Natural Sciences, The University of Texas at Austin</li>
+            <li><strong>Jeremy Martin</strong> — Senior Research & Policy Analyst, The University of Texas System</li>
+            <li><strong>Emma Savage-Davis</strong> — Dean, College of Education and Human Development, TAMU-San Antonio</li>
+            <li><strong>Robin Kapavik</strong> — Associate Dean, College of Education and Human Development, TAMU-San Antonio</li>
         </ul>
         """,
         unsafe_allow_html=True
@@ -793,7 +826,26 @@ def About_us():
 
     st.markdown("---")
 
-    st.markdown("<h4>🧭 How to Navigate This Website</h4>", unsafe_allow_html=True)
+    # ---------------- Contact ----------------
+    st.markdown(
+        """
+        <h4>✉️ Contact</h4>
+        <p style="line-height: 1.7; font-size: 17px; color: #E6EDF3;">
+            For questions or comments, please contact Jeremy Martin at
+            <a href="mailto:jemartin@utsystem.edu">jemartin@utsystem.edu</a>.
+        </p>
+        <p style="line-height: 1.7; font-size: 17px; color: #E6EDF3;">
+            For source code and pull requests, please visit Taksh Beladiya's GitHub page at
+            <a href="https://github.com/takshb21/asep_dashboard" target="_blank">github.com/takshb21/asep_dashboard</a>.
+        </p>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.markdown("---")
+
+    # ---------------- Next Steps ----------------
+    st.markdown("<h4>➡️ Next Steps</h4>", unsafe_allow_html=True)
 
     nav_flow_css = """
     <style>
@@ -842,7 +894,7 @@ def About_us():
         <div class="nav-step">
             <div class="step-icon">📁</div>
             <div class="step-title">1. Data Management</div>
-            <div class="step-desc">Upload your Excel/CSV files. Rename any files if prompted.</div>
+            <div class="step-desc">On your left, click "Data Management." Upload your Excel/CSV files there, and rename any files if prompted.</div>
         </div>
         <div class="nav-arrow">➡️</div>
         <div class="nav-step">
@@ -873,7 +925,6 @@ def About_us():
 
     st.markdown(nav_flow_css, unsafe_allow_html=True)
     st.markdown(nav_flow_html, unsafe_allow_html=True)
-
 
 # ─────────────────────────────────────────────
 # MAIN
