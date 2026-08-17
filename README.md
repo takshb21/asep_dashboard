@@ -11,6 +11,8 @@ A Streamlit web application for calculating and visualizing **Alternative Studen
 - [Pages](#-pages)
 - [Datasets Required](#-datasets-required)
 - [Getting Started](#-getting-started)
+  - [🪟 Windows Setup](#-windows-setup)
+  - [🍎 macOS Setup](#-macos-setup)
 - [How to Use the App](#-how-to-use-the-app)
 - [Data Security](#-data-security)
 - [Project Structure](#-project-structure)
@@ -85,33 +87,166 @@ This dashboard automates the process of calculating ASEP compliance metrics for 
 
 ## 🚀 Getting Started
 
-### Prerequisites
-- Python 3.9+
-- pip
+Pick the guide for your operating system below. Each guide assumes **no prior coding experience** — just copy and paste each command into your terminal (one at a time) and press Enter.
 
-### Installation
+---
+
+### 🪟 Windows Setup
+
+**To open a terminal:** Press `Windows key`, type `Command Prompt` (or `PowerShell`), and hit Enter.
+
+#### Step 1: Check if Python is Already Installed
 
 ```bash
-# Clone the repository
+python --version
+```
+
+**✅ If Python IS installed** — you'll see something like `Python 3.11.4`. Skip to Step 2.
+
+**❌ If Python is NOT installed** — you'll see an error like `'python' is not recognized`:
+1. Go to [python.org/downloads](https://www.python.org/downloads/)
+2. Click **Download Python** (it auto-detects Windows)
+3. Run the installer — **important:** check the box that says **"Add Python to PATH"** before clicking Install
+4. Once finished, close and reopen your terminal, then run `python --version` again to confirm
+
+#### Step 2: Check if Git is Already Installed
+
+```bash
+git --version
+```
+
+**✅ If Git IS installed** — skip to Step 3.
+
+**❌ If Git is NOT installed:**
+1. Go to [git-scm.com/download/win](https://git-scm.com/download/win)
+2. Download and run the installer, clicking **Next** through the default options
+3. Close and reopen your terminal, then run `git --version` again to confirm
+
+#### Step 3: Download the Project
+
+```bash
 git clone https://github.com/takshb21/asep_dashboard.git
 cd asep_dashboard
+```
 
-# (Recommended) Create a virtual environment
+#### Step 4: Create a Virtual Environment
+
+```bash
 python -m venv venv
-source venv/bin/activate      # macOS/Linux
-venv\Scripts\activate         # Windows
+venv\Scripts\activate
+```
 
-# Install dependencies
+✅ You'll know it worked when you see `(venv)` appear at the start of the line.
+
+#### Step 5: Install Required Packages
+
+```bash
 pip install -r requirements.txt
 ```
 
-### Run the App
+Let it run until it returns to a normal prompt (may take a minute or two).
+
+#### Step 6: Build the Desktop App
 
 ```bash
-streamlit run app.py
+streamlit-desktop-app build app.py --name MyDashboard --pyinstaller-options --onefile --noconfirm --add-data "images;images" --add-data "utils\dataset_download_info.pdf;utils" --collect-submodules=utils --hidden-import=utils.certificate_chart --hidden-import=utils.chapter_3_calculations --hidden-import=utils.chapter_4_calculations --hidden-import=utils.chapter_5_calculations --hidden-import=utils.chapter_6_calculations --hidden-import=utils.chapter_7_calculations --hidden-import=utils.data_management --hidden-import=utils.gauge
 ```
 
-The app will open automatically in your browser at `http://localhost:8501`.
+This can take several minutes — let it run until the prompt returns.
+
+#### Step 7: Open the App
+
+1. Open File Explorer and go into the `asep_dashboard` folder, then the new `dist` folder
+2. Double-click **MyDashboard.exe**
+3. If Windows shows a "Windows protected your PC" warning, click **More info** → **Run anyway**
+
+#### Running It Again Later
+
+```bash
+cd asep_dashboard
+venv\Scripts\activate
+```
+
+Then launch the app from the `dist` folder as normal.
+
+---
+
+### 🍎 macOS Setup
+
+**To open Terminal:** Press `Cmd + Space`, type `Terminal`, and hit Enter.
+
+#### Step 1: Check if Python is Already Installed
+
+```bash
+python3 --version
+```
+
+**✅ If Python IS installed** — you'll see something like `Python 3.11.4`. Skip to Step 2.
+
+**❌ If Python is NOT installed** — you'll see an error like `command not found: python3`:
+1. Go to [python.org/downloads](https://www.python.org/downloads/)
+2. Click the yellow **Download Python** button (it auto-detects macOS)
+3. Open the downloaded `.pkg` file and click through the installer (Continue → Continue → Agree → Install)
+4. Enter your Mac password if asked
+5. Close and reopen Terminal, then run `python3 --version` again to confirm
+
+#### Step 2: Check if Git is Already Installed
+
+```bash
+git --version
+```
+
+**✅ If Git IS installed** — skip to Step 3.
+
+**❌ If Git is NOT installed:**
+A popup will appear asking to install "Command Line Developer Tools." Click **Install**, agree to the terms, and wait a few minutes. Then run `git --version` again to confirm.
+
+#### Step 3: Download the Project
+
+```bash
+git clone https://github.com/takshb21/asep_dashboard.git
+cd asep_dashboard
+```
+
+#### Step 4: Create a Virtual Environment
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+✅ You'll know it worked when you see `(venv)` appear at the start of the line.
+
+#### Step 5: Install Required Packages
+
+```bash
+pip install -r requirements.txt
+```
+
+Let it run until it returns to a normal prompt (may take a minute or two).
+
+#### Step 6: Build the Desktop App
+
+```bash
+streamlit-desktop-app build app.py --name MyDashboard --pyinstaller-options --onefile --noconfirm --add-data "images:images" --add-data "utils/dataset_download_info.pdf:utils" --collect-submodules=utils --hidden-import=utils.certificate_chart --hidden-import=utils.chapter_3_calculations --hidden-import=utils.chapter_4_calculations --hidden-import=utils.chapter_5_calculations --hidden-import=utils.chapter_6_calculations --hidden-import=utils.chapter_7_calculations --hidden-import=utils.data_management --hidden-import=utils.gauge
+```
+
+This can take several minutes — let it run until the prompt returns.
+
+#### Step 7: Open the App
+
+1. In Terminal, type `open dist` and press Enter to open the `dist` folder in Finder
+2. Double-click **MyDashboard**
+3. If macOS blocks it ("unidentified developer"): **right-click** (or Control-click) **MyDashboard** → **Open** → **Open** again in the popup. You only need to do this once.
+
+#### Running It Again Later
+
+```bash
+cd asep_dashboard
+source venv/bin/activate
+```
+
+Then launch the app from the `dist` folder as normal.
 
 ---
 
