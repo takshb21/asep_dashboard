@@ -787,14 +787,6 @@ def About_us():
                 downloaded. The software neither operates nor stores data in any environment other
                 than where you originally downloaded the files.
             </p>
-            <p style="color: #dddddd; font-size: 17px; line-height: 1.7;">
-                If you are unable to run the desktop version, we have developed a
-                <a href="https://asepdashboard-kqt5fwct9wzlnxgqnf2qsb.streamlit.app/" target="_blank">Streamlit</a>
-                site that will allow users to access the tool from a browser. Streamlit is
-                <a href="https://discuss.streamlit.io/t/streamlit-cloud-is-now-soc-2-type-1-compliant/20850" target="_blank">SOC 2 Type 1 compliant</a>,
-                and more information on their security practices is available
-                <a href="https://docs.streamlit.io/deploy/streamlit-community-cloud/get-started/trust-and-security" target="_blank">here</a>.
-            </p>
         </div>
         """,
         unsafe_allow_html=True
