@@ -149,7 +149,7 @@ Let it run until it returns to a normal prompt (may take a minute or two).
 #### Step 6: Build the Desktop App
 
 ```bash
-streamlit-desktop-app build app.py --name MyDashboard --pyinstaller-options --onefile --noconfirm --add-data "images;images" --add-data "utils\dataset_download_info.pdf;utils" --collect-submodules=utils --hidden-import=utils.certificate_chart --hidden-import=utils.chapter_3_calculations --hidden-import=utils.chapter_4_calculations --hidden-import=utils.chapter_5_calculations --hidden-import=utils.chapter_6_calculations --hidden-import=utils.chapter_7_calculations --hidden-import=utils.data_management --hidden-import=utils.gauge
+streamlit-desktop-app build app.py --name MyDashboard --pyinstaller-options --onefile --noconfirm --add-data "images;images" --add-data "utils\dataset_download_info.pdf;utils" --add-data "%VIRTUAL_ENV%\Lib\site-packages\streamlit_theme\frontend\dist;streamlit_theme\frontend\dist" --collect-submodules=utils --hidden-import=enable_downloads --hidden-import=utils.certificate_chart --hidden-import=utils.chapter_3_calculations --hidden-import=utils.chapter_4_calculations --hidden-import=utils.chapter_5_calculations --hidden-import=utils.chapter_6_calculations --hidden-import=utils.chapter_7_calculations --hidden-import=utils.data_management --hidden-import=utils.gauge
 ```
 
 This can take several minutes — let it run until the prompt returns.
@@ -228,7 +228,7 @@ Let it run until it returns to a normal prompt (may take a minute or two).
 #### Step 6: Build the Desktop App
 
 ```bash
-streamlit-desktop-app build app.py --name MyDashboard --pyinstaller-options --onefile --noconfirm --add-data "images:images" --add-data "utils/dataset_download_info.pdf:utils" --collect-submodules=utils --hidden-import=utils.certificate_chart --hidden-import=utils.chapter_3_calculations --hidden-import=utils.chapter_4_calculations --hidden-import=utils.chapter_5_calculations --hidden-import=utils.chapter_6_calculations --hidden-import=utils.chapter_7_calculations --hidden-import=utils.data_management --hidden-import=utils.gauge
+streamlit-desktop-app build app.py --name MyDashboard --pyinstaller-options --onefile --noconfirm --add-data "images:images" --add-data "utils/dataset_download_info.pdf:utils" --add-data "$VIRTUAL_ENV/lib/python3.*/site-packages/streamlit_theme/frontend/dist:streamlit_theme/frontend/dist" --collect-submodules=utils --hidden-import=enable_downloads --hidden-import=utils.certificate_chart --hidden-import=utils.chapter_3_calculations --hidden-import=utils.chapter_4_calculations --hidden-import=utils.chapter_5_calculations --hidden-import=utils.chapter_6_calculations --hidden-import=utils.chapter_7_calculations --hidden-import=utils.data_management --hidden-import=utils.gauge
 ```
 
 This can take several minutes — let it run until the prompt returns.
@@ -273,7 +273,9 @@ If you are unable to run the desktop version, we have developed a [Streamlit](ht
 
 ```
 .
+.
 ├── app.py                          # Main Streamlit app (navigation, pages, ASEP score calculation)
+├── enable_downloads.py             # Configures PyWebView to allow file downloads in the desktop window
 ├── utils/
 │   ├── data_management.py          # File upload, renaming, and download helpers
 │   ├── chapter_3_calculations.py   # Indicator 1a/1b: exam pass rate calculations
@@ -283,7 +285,8 @@ If you are unable to run the desktop version, we have developed a [Streamlit](ht
 │   ├── chapter_7_calculations.py   # Indicator 5: new teacher survey calculations
 │   └── dataset_download_info.pdf   # Step-by-step dataset download guide
 ├── images/
-│   └── company_logo.png            # Logo shown on the About Us page
+│   ├── black_company_logo.png      # Light theme logo
+│   └── white_company_logo.png      # Dark theme logo
 └── requirements.txt
 ```
 

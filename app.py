@@ -1,4 +1,5 @@
 import streamlit as st
+import enable_downloads
 import pandas as pd
 import plotly.graph_objects as go
 from utils.data_management import show_old_new_file, process_and_rename_file
@@ -13,6 +14,8 @@ import plotly.graph_objects as go
 from streamlit_theme import st_theme
 import base64
 from streamlit_theme import st_theme
+import os
+import sys
 
 
 # ─────────────────────────────────────────────
@@ -177,7 +180,7 @@ Each dataset comes from a different report in **I2I**, **ECOS**, or **ResultsAna
 
 
     # ── PDF: Detailed dataset download guide ──
-    pdf_path = "utils/dataset_download_info.pdf"
+    pdf_path = get_asset_path("utils/dataset_download_info.pdf")
     try:
         with open(pdf_path, "rb") as pdf_file:
             pdf_bytes = pdf_file.read()
@@ -726,19 +729,28 @@ def Dashboard():
             asep_index_score(first_two_attempt_data_1a_data, first_two_attempt_data_1b_data, principal_dataset, teacher_survey_dataset, student_growth_data, field_supervision_dataset)
         else:
             st.info("⚠️ Please ensure the required files are uploaded to populate this tab.")
-    
 
+
+
+def get_asset_path(relative_path: str) -> str:
+    """Get absolute path to resource, works for dev and for PyInstaller."""
+    if hasattr(sys, "_MEIPASS"):
+        # PyInstaller temporary extraction directory
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
 
 def About_us():
     theme = st_theme()
-    # Default to light theme/black logo if theme status isn't available yet
     is_light = theme and theme.get("base") == "light"
 
-    logo_path = (
+    logo_filename = (
         "images/black_company_logo.png"
         if is_light
         else "images/white_company_logo.png"
     )
+
+    # Dynamically resolve path whether frozen or in dev mode
+    logo_path = get_asset_path(logo_filename)
 
     with open(logo_path, "rb") as img_file:
         logo_base64 = base64.b64encode(img_file.read()).decode()
