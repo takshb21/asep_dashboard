@@ -116,7 +116,7 @@ def process_and_rename_file(uploaded_file):
     # 1. Handle Manual Collisions First (Same columns in both files)
     if 'principal_perceptions' in uploaded_file.name.lower():
         new_name = 'principal_perceptions'
-    elif 'new_teacher_perceptions' in uploaded_file.name.lower():
+    elif 'teacher_perceptions' in uploaded_file.name.lower():
         new_name = 'teacher_perceptions'
 
     # 2. Schema-Based Auto-Matching for all other unique datasets
