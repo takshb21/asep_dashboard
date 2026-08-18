@@ -5,3 +5,4 @@ xlsxwriter==3.2.9
 matplotlib==3.10.8
 plotly==6.6.0
 st_theme==1.2.3
+python-calamine==0.8.2
