@@ -352,37 +352,28 @@ def calculate_asep_indicator_1b_calculation(df):
 # THEME VARIABLES — Dark Theme (shared across all chapters)
 # ══════════════════════════════════════════════════════════
 
-# ── Backgrounds ──
-BG_MAIN      = "#0E1117"   # main page/app background (deep black-navy)
-BG_SURFACE   = "#1A1D24"   # card/chart surface background (slightly lighter than main)
+BG_MAIN      = "rgba(0,0,0,0)"   # fully transparent — let the real page show through
+BG_SURFACE   = "rgba(0,0,0,0)"   # fully transparent — no card box, no border
 
-# ── Text ──
-TEXT_PRIMARY = "#FAFAFA"   # main readable text (titles, values) — near-white
-TEXT_MUTED   = "#9CA3AF"   # secondary/muted text (axis ticks, captions) — light gray
+TEXT_PRIMARY = "var(--text-color)"
+TEXT_MUTED   = "var(--text-color)"
 
-# ── Structural ──
-GRID_COLOR   = "#2A2E37"   # gridlines — subtle, low-contrast against BG_SURFACE
-BORDER       = "#3A3F4B"   # borders/outlines around chart elements — mid gray
+GRID_COLOR   = "rgba(128,128,128,0.25)"   # translucent gray — visible on both light & dark
+BORDER       = "rgba(128,128,128,0.4)"
 
-# ── Typography ──
 FONT_FAMILY  = "Segoe UI, Helvetica, Arial, sans-serif"
 
-# ── Accent colors (used for non-binary/informational elements) ──
-ACCENT_BLUE  = "#58A6FF"   # radar line default, histogram/line chart accents
-ACCENT_TEAL  = "#39D2C0"   # donut palette (demographic breakdowns)
-ACCENT_AMBER = "#F0B429"   # donut palette (demographic breakdowns)
+ACCENT_BLUE  = "#58A6FF"
+ACCENT_TEAL  = "#39D2C0"
+ACCENT_AMBER = "#F0B429"
 
-# ── Binary threshold colors (Met / Not Met — used across all chapters) ──
-MET_COLOR    =  "#1B8720"    # green — target met / passed
-MISSED_COLOR = "#FF1708"     # red   — target missed / failed
+MET_COLOR    = "#1B8720"
+MISSED_COLOR = "#FF1708"
+GREEN, RED   = MET_COLOR, MISSED_COLOR
+YELLOW       = "#F1C40F"
 
-# ── Aliases (used in older 3-band charts, e.g. Ch.4 Grade Level bar) ──
-GREEN  = MET_COLOR
-RED    = MISSED_COLOR
-YELLOW = "#F1C40F"         # only used where a 3-band system still applies
-
-PASS_RATE_TARGET_1A  = 85       # Ch.3 — Indicator 1a (exam pass rate %)
-PASS_RATE_TARGET_1B  = 75       # Ch.3 — Indicator 1b (exam pass rate %)
+PASS_RATE_TARGET_1A = 85
+PASS_RATE_TARGET_1B = 75
 
 
 def render_indicator_1a_charts(indi_1a_result: dict, combined_df_1a: pd.DataFrame):
@@ -458,8 +449,8 @@ def render_indicator_1a_charts(indi_1a_result: dict, combined_df_1a: pd.DataFram
             xaxis=dict(title="Count", tickfont=dict(family=FONT_FAMILY, color=TEXT_MUTED), gridcolor=GRID_COLOR, linecolor=BORDER),
             yaxis=dict(title="", tickfont=dict(family=FONT_FAMILY, color=TEXT_MUTED), linecolor=BORDER),
             legend=dict(orientation="h", y=1.08, font=dict(family=FONT_FAMILY, color=TEXT_MUTED), bgcolor="rgba(0,0,0,0)"),
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor=BG_SURFACE,
+            plot_bgcolor=BG_SURFACE,
             font=dict(family=FONT_FAMILY, color=TEXT_PRIMARY),
         )
         st.plotly_chart(bar_exam, use_container_width=True)
@@ -497,8 +488,8 @@ def render_indicator_1a_charts(indi_1a_result: dict, combined_df_1a: pd.DataFram
             margin=dict(t=40, b=20, l=20, r=20),
             yaxis=dict(range=[0, 110], ticksuffix="%", tickfont=dict(family=FONT_FAMILY, color=TEXT_MUTED), gridcolor=GRID_COLOR, linecolor=BORDER),
             xaxis=dict(title="", tickfont=dict(family=FONT_FAMILY, color=TEXT_MUTED), linecolor=BORDER),
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor=BG_SURFACE,
+            plot_bgcolor=BG_SURFACE,
             font=dict(family=FONT_FAMILY, color=TEXT_PRIMARY),
         )
         st.plotly_chart(bar_race, use_container_width=True)
@@ -583,8 +574,8 @@ def render_indicator_1b_charts(
             xaxis=dict(title="Count", tickfont=dict(family=FONT_FAMILY, color=TEXT_MUTED), gridcolor=GRID_COLOR, linecolor=BORDER),
             yaxis=dict(title="", tickfont=dict(family=FONT_FAMILY, color=TEXT_MUTED), linecolor=BORDER),
             legend=dict(orientation="h", y=1.08, font=dict(family=FONT_FAMILY, color=TEXT_MUTED), bgcolor="rgba(0,0,0,0)"),
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor=BG_SURFACE,
+            plot_bgcolor=BG_SURFACE,
             font=dict(family=FONT_FAMILY, color=TEXT_PRIMARY),
         )
         st.plotly_chart(bar_cert, use_container_width=True)
@@ -619,8 +610,8 @@ def render_indicator_1b_charts(
             margin=dict(t=40, b=20, l=20, r=20),
             yaxis=dict(range=[0, 110], ticksuffix="%", tickfont=dict(family=FONT_FAMILY, color=TEXT_MUTED), gridcolor=GRID_COLOR, linecolor=BORDER),
             xaxis=dict(title="", tickfont=dict(family=FONT_FAMILY, color=TEXT_MUTED), linecolor=BORDER),
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor=BG_SURFACE,
+            plot_bgcolor=BG_SURFACE,
             font=dict(family=FONT_FAMILY, color=TEXT_PRIMARY),
         )
         st.plotly_chart(bar_rate, use_container_width=True)

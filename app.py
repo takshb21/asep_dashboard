@@ -1,36 +1,18 @@
 import streamlit as st
 import pandas as pd
-import io
-import plotly.express as px
 import plotly.graph_objects as go
-from utils.data_management import show_old_new_file, download_new_file, process_and_rename_file
-from utils.chapter_4_calculations import principal_perceptions, specific_year_data, chapter_4_chart, merge_both_df, get_asep_consolidated_data, remove_duplicates, missing_required_sections, chapter_4_group_aggregration, chapter_4_survey_summary, calculate_asep_chapter_4
-from utils.chapter_5_calculations import verify_certificate, student_growth, chapter_5_summary, chapter_5_calculation
-from utils.chapter_3_calculations import exam_pass_rate, indicator_1a_data, indicator_1b_data, calculate_asep_indicator_1a, calculate_asep_indicator_1b
-from utils.chapter_6_calculations import process_chapter_6_records, indicator_4a_calculate, plot_indicator_4a, plot_indicator_4b, field_supervision, chapter_4a_calculation, chapter_4b_calculation 
+from utils.data_management import show_old_new_file, process_and_rename_file
+from utils.chapter_4_calculations import principal_perceptions, calculate_asep_chapter_4
+from utils.chapter_5_calculations import student_growth, chapter_5_calculation
+from utils.chapter_3_calculations import exam_pass_rate, calculate_asep_indicator_1a, calculate_asep_indicator_1b
+from utils.chapter_6_calculations import field_supervision, chapter_4a_calculation, chapter_4b_calculation 
 from utils.chapter_7_calculations import new_teacher
 
 import plotly.express as px
 import plotly.graph_objects as go
-
-
-
-# import os
-# import psutil
-
-# def get_memory_usage():
-#     # Gets the Resident Set Size (RSS) memory of the current process in MB
-#     process = psutil.Process(os.getpid())
-#     mem_bytes = process.memory_info().rss
-#     return mem_bytes / (1024 * 1024)
-
-# st.title("Dashboard Performance Monitor")
-
-# # Display baseline memory usage
-# current_mem = get_memory_usage()
-# st.metric(label="Current Process Memory Usage", value=f"{current_mem:.2f} MB")
-
-
+from streamlit_theme import st_theme
+import base64
+from streamlit_theme import st_theme
 
 
 # ─────────────────────────────────────────────
@@ -43,8 +25,10 @@ BORDER       = "#30363D"   # subtle border
 ACCENT_BLUE  = "#58A6FF"   # bright blue for lines/accents
 ACCENT_TEAL  = "#3BCEAC"   # teal for pass/positive
 ACCENT_AMBER = "#F0B429"   # amber for secondary line
-TEXT_PRIMARY = "#E6EDF3"   # main text
-TEXT_MUTED   = "#FFFFFF"   # captions / axis labels
+# TEXT_PRIMARY = "#E6EDF3"   # main text
+# TEXT_MUTED   = "#FFFFFF"   # captions / axis labels
+TEXT_PRIMARY = "var(--text-color)"
+TEXT_MUTED   = "var(--text-color)"
 GRID_COLOR   = "#21262D"   # chart gridlines
 
 # Gauge / traffic light
@@ -85,11 +69,11 @@ h1, h2, h3, h4, h5, h6,
 [data-testid="stMetricLabel"],
 [data-testid="stMetricValue"],
 [data-testid="stMetricDelta"] {
-    color: #E6EDF3 !important;
+    color: var(--text-color) !important;
     font-family: 'Montserrat', sans-serif !important;
 }
 
-.stCaption { color: #8B949E !important; }
+.stCaption { color: var(--text-color) !important; }
 
 /* ── metric cards ── */
 [data-testid="metric-container"] {
@@ -112,7 +96,7 @@ hr { border-color: #30363D !important; }
 [data-baseweb="select"] > div {
     background-color: #161B22 !important;
     border: 1px solid #30363D !important;
-    color: #E6EDF3 !important;
+    color: var(--text-color) !important;
     font-family: 'Montserrat', sans-serif !important;
 }
 
@@ -164,8 +148,8 @@ def Data_Management():
         "**New Teacher Survey Dataset** come from the *same* I2I report (New Teacher Perceptions "
         "by Candidate), so the downloaded files look identical. Please rename them manually before "
         "uploading, or the app won't be able to tell them apart:\n\n"
-        "- **Principal Perception Dataset** → rename to **academic_year_principal_perceptions**\n"
-        "- **New Teacher Survey Dataset** → rename to **new_teacher_perceptions_by_candidate**"
+        "- **Principal Perception Dataset** → rename to **principal_perceptions**\n"
+        "- **New Teacher Survey Dataset** → rename to **teacher_perceptions**"
     )
 
     with st.expander("📋 What datasets do I need? (click to expand)", expanded=True):
@@ -217,13 +201,13 @@ Each dataset comes from a different report in **I2I**, **ECOS**, or **ResultsAna
     )
     show_old_new_file()
 
-    st.markdown("---")
-    st.subheader("2️⃣ Download Renamed Files")
-    st.caption(
-        "Use the button below to download your file with its corrected/renamed filename — "
-        "click it to save the renamed file to your computer."
-    )
-    download_new_file()
+    # st.markdown("---")
+    # st.subheader("2️⃣ Download Renamed Files")
+    # st.caption(
+    #     "Use the button below to download your file with its corrected/renamed filename — "
+    #     "click it to save the renamed file to your computer."
+    # )
+    # download_new_file()
 
 
 
@@ -529,6 +513,7 @@ def asep_index_score(first_two_attempt_data_1a_data, first_two_attempt_data_1b_d
     col1, col2 = st.columns(2)
 
     with col1:
+        st.subheader("ASEP Index Score")
         st.caption(
             "🟢 Green = 85% or more  |  🟡 Yellow = 80% to less than 85%  |  🔴 Red = Below 80%. "
             f"(Current ASEP Index Score: {asep_index_score_value}%)"
@@ -541,30 +526,45 @@ def asep_index_score(first_two_attempt_data_1a_data, first_two_attempt_data_1b_d
         else:
             gauge_color = RED
 
+        theme = st_theme(key="theme_chapter_8")
+        is_light = theme and theme.get("base") == "light"
+
+        gauge_fill_color   = "#FFFFFF" if is_light else "#000000"   # white fill in light theme
+        gauge_border_color = "#000000" if is_light else "#FFFFFF"   # black border in light theme
+
         fig_gauge = go.Figure(
             go.Indicator(
                 mode="gauge+number",
                 value=asep_index_score_value,
                 number=dict(
-                    font=dict(size=52, color="white"),
+                    font=dict(size=52, color=gauge_border_color),
                     suffix="%",
                 ),
                 domain={"x": [0, 1], "y": [0, 1]},
                 gauge={
-                    "axis": {"range": [0, 100], "tickwidth": 1, "tickcolor": "darkblue"},
+                    "axis": {
+                        "range": [0, 100],
+                        "tickwidth": 1,
+                        "tickcolor": gauge_border_color,
+                        "tickfont": {"color": gauge_border_color},
+                    },
                     "bar": {"color": gauge_color},
-                    "bgcolor": "white",
+                    "bgcolor": gauge_fill_color,
                     "borderwidth": 2,
-                    "bordercolor": "gray",
+                    "bordercolor": gauge_border_color,
                     "steps": [
-                        {"range": [0, 80],   "color": "#000000"},
-                        {"range": [80, 85],  "color": "#000000"},
-                        {"range": [85, 100], "color": "#000000"},
+                        {"range": [0, 80],   "color": gauge_fill_color},
+                        {"range": [80, 85],  "color": gauge_fill_color},
+                        {"range": [85, 100], "color": gauge_fill_color},
                     ],
                 },
             )
         )
-        fig_gauge.update_layout(height=300, margin=dict(t=30, b=10))
+        fig_gauge.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            height=300,
+            margin=dict(t=30, b=10),
+        )
         st.plotly_chart(fig_gauge, use_container_width=True)
 
 # ─────────────────────────────────────────────
@@ -641,10 +641,10 @@ def Dashboard():
     }
 
     NAME_TO_KEY = {
-        "academic_year_principal_perceptions": "principal_perception",
+        "principal_perceptions": "principal_perception",
         "educator_details_with_emp_start_date": "educator_details",
         "academic_year_average_student_growth_by_candidate": "student_growth",
-        "new_teacher_perceptions_by_candidate": "new_teacher_survey",
+        "teacher_perceptions": "new_teacher_survey",
         "exam_roaster_data": "exam_roaster",
         "observation_df": "observation_data",
         "main_finisher_data": "main_finisher_data",
@@ -728,10 +728,19 @@ def Dashboard():
             st.info("⚠️ Please ensure the required files are uploaded to populate this tab.")
     
 
-import base64
+
 def About_us():
-    # Centered logo (properly centered via HTML/CSS)
-    with open("images/company_logo.png", "rb") as img_file:
+    theme = st_theme()
+    # Default to light theme/black logo if theme status isn't available yet
+    is_light = theme and theme.get("base") == "light"
+
+    logo_path = (
+        "images/black_company_logo.png"
+        if is_light
+        else "images/white_company_logo.png"
+    )
+
+    with open(logo_path, "rb") as img_file:
         logo_base64 = base64.b64encode(img_file.read()).decode()
 
     st.markdown(
@@ -740,7 +749,7 @@ def About_us():
             <img src="data:image/png;base64,{logo_base64}" width="300">
         </div>
         """,
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
     st.markdown("---")
@@ -749,7 +758,7 @@ def About_us():
     st.markdown(
         """
         <h4>📖 Background</h4>
-        <p style="line-height: 1.7; font-size: 17px; color: #E6EDF3;">
+        <p style="line-height: 1.7; font-size: 17px; color: var(--text-color);">
             The ASEP Data Dashboard was developed in support of the
             <a href="https://elevatetxed.utsystem.edu/" target="_blank">UT System's ElevateTXed initiative</a>.
             The ASEP Data Dashboard was envisioned and collaboratively designed by the
@@ -757,7 +766,7 @@ def About_us():
             the capacity of educator preparation programs (EPPs) to use data for continuous
             improvement, informed decision-making, and alignment with state accountability metrics.
         </p>
-        <p style="line-height: 1.7; font-size: 17px; color: #E6EDF3;">
+        <p style="line-height: 1.7; font-size: 17px; color: var(--text-color);">
             This software will allow users to securely upload raw data files from multiple TEA
             sources, including I2I, ECOS, ResultsAnalyzer, and others, and automatically convert
             those files into EPP-specific dashboards in alignment with the
@@ -778,7 +787,7 @@ def About_us():
     # ---------------- Data Security ----------------
     st.markdown(
         """
-        <div style="background-color: #262730; padding: 20px; border-radius: 10px; border: 1px solid #3d3d3d;">
+        <div style="background-color: #262730; padding: 20px; border-radius: 10px; border: 1px solid var(--text-color);">
             <h4 style="color: #ffffff;">🔒 Data Security</h4>
             <p style="color: #dddddd; font-size: 17px; line-height: 1.7;">
                 When running the desktop version of this application, data files will never leave
@@ -787,6 +796,7 @@ def About_us():
                 downloaded. The software neither operates nor stores data in any environment other
                 than where you originally downloaded the files.
             </p>
+            
         </div>
         """,
         unsafe_allow_html=True
@@ -798,12 +808,12 @@ def About_us():
     st.markdown(
         """
         <h4>👥 I2I Workgroup Members</h4>
-        <p style="line-height: 1.7; font-size: 17px; color: #E6EDF3;">
+        <p style="line-height: 1.7; font-size: 17px; color: var(--text-color);">
             The workgroup was initiated by the UT System's ElevateTXed initiative and has evolved
             to include participants from multiple institutions and systems, reflecting its
             broader statewide scope:
         </p>
-        <ul style="line-height: 1.9; font-size: 17px; color: #E6EDF3;">
+        <ul style="line-height: 1.9; font-size: 17px; color: var(--text-color);">
             <li><strong>Taksh Beladiya</strong> — Graduate Research Assistant, The University of Texas System</li>
             <li><strong>Kevin Badgett</strong> — Dean, College of Education, Sul Ross State University</li>
             <li><strong>Michelle Lowry</strong> — Senior Software Developer/Analyst, UTeach, The University of Texas at Austin</li>
@@ -822,11 +832,11 @@ def About_us():
     st.markdown(
         """
         <h4>✉️ Contact</h4>
-        <p style="line-height: 1.7; font-size: 17px; color: #E6EDF3;">
+        <p style="line-height: 1.7; font-size: 17px; color: var(--text-color);">
             For questions or comments, please contact Jeremy Martin at
             <a href="mailto:jemartin@utsystem.edu">jemartin@utsystem.edu</a>.
         </p>
-        <p style="line-height: 1.7; font-size: 17px; color: #E6EDF3;">
+        <p style="line-height: 1.7; font-size: 17px; color: var(--text-color);">
             For source code and pull requests, please visit Taksh Beladiya's GitHub page at
             <a href="https://github.com/takshb21/asep_dashboard" target="_blank">github.com/takshb21/asep_dashboard</a>.
         </p>
@@ -836,7 +846,7 @@ def About_us():
 
     st.markdown("---")
 
-    # ---------------- Next Steps ----------------
+        # ---------------- Next Steps ----------------
     st.markdown("<h4>➡️ Next Steps</h4>", unsafe_allow_html=True)
 
     nav_flow_css = """
@@ -850,8 +860,8 @@ def About_us():
         margin: 20px 0;
     }
     .nav-step {
-        background-color: #161B22;
-        border: 1px solid #30363D;
+        background-color: var(--secondary-background-color);
+        border: 1px solid rgba(128, 128, 128, 0.3);
         border-radius: 10px;
         padding: 16px 18px;
         width: 300px;
@@ -869,7 +879,7 @@ def About_us():
         margin-bottom: 6px;
     }
     .nav-step .step-desc {
-        color: #E6EDF3;
+        color: var(--text-color);
         font-size: 17px;
         line-height: 1.4;
     }
@@ -928,7 +938,7 @@ def main():
         initial_sidebar_state="expanded",
     )
 
-
+    
     sidebar_data()
 
     pages = [st.Page(About_us, title="About Us", default=True),

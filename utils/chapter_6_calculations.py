@@ -3,6 +3,7 @@ import numpy as np
 import plotly.graph_objects as go
 import streamlit as st
 import plotly.express as px
+from streamlit_theme import st_theme
 
 def process_chapter_6_records(df):
     df = df.copy()
@@ -239,7 +240,7 @@ def field_supervision(observation_data, main_finisher_data):
     # Chekc what toal points are taken as there are 3 people also so which point to consider
     st.header("Quality of Field Supervision (ASEP Indicator 4b)")
 
-    st.write(filtered_copy_df['Candidate TEA ID'].nunique())
+    # st.write(filtered_copy_df['Candidate TEA ID'].nunique())
 
     exp_filtered_df = df.copy()
     if experience_model_selected != "All":
@@ -329,35 +330,6 @@ def plot_indicator_4a(result_df: pd.DataFrame, num_met_req: int, num_total_exp: 
             margin=dict(t=50, b=0, l=0, r=0),
         )
         st.plotly_chart(donut_fig, use_container_width=True)
-
-    # # ---------- Chart 2: Gauge chart (% compliance) ----------
-    # with col2:
-    #     st.caption("Overall compliance rate (Met Requirement ÷ Total Expected)")
-    #     gauge_color = MET_COLOR if pct_met >= 80 else MISSED_COLOR
-    #     gauge_fig = go.Figure(
-    #         go.Indicator(
-    #             mode="gauge+number",
-    #             value=pct_met,
-    #             number={"suffix": "%", "font": dict(family=FONT_FAMILY, size=44, color="white")},
-    #             title={"text": "Compliance Rate", "font": dict(family=FONT_FAMILY, color=TEXT_PRIMARY)},
-    #             gauge={
-    #                 "axis": {"range": [0, 100], "tickfont": dict(family=FONT_FAMILY, color=TEXT_MUTED), "tickcolor": BORDER},
-    #                 "bar": {"color": gauge_color},
-    #                 "bgcolor": BG_SURFACE,
-    #                 "borderwidth": 2,
-    #                 "bordercolor": BORDER,
-    #                 "steps": [
-    #                     {"range": [0, 100], "color": BG_SURFACE},
-    #                 ],
-    #             },
-    #         )
-    #     )
-    #     gauge_fig.update_layout(
-    #         paper_bgcolor="rgba(0,0,0,0)",
-    #         font=dict(family=FONT_FAMILY, color=TEXT_PRIMARY),
-    #         margin=dict(t=50, b=0, l=0, r=0),
-    #     )
-    #     st.plotly_chart(gauge_fig, use_container_width=True)
 
     # ---------- Chart 3: Average Duration by Assignment Type ----------
     with col2:
@@ -596,15 +568,24 @@ def plot_indicator_4b(result_dict, candidate_df):
         st.caption("🟢 Green = ≥ 90%  |  🔴 Red = below 90%")
         gauge_color = MET_COLOR if percent_met >= PCT_TARGET_4B else MISSED_COLOR
 
+        theme = st_theme(key="theme_chapter_6_4b")
+        is_light = theme and theme.get("base") == "light"
+
+        gauge_number_color = "#000000" if is_light else "#FFFFFF"
+        gauge_threshold_color = "#000000" if is_light else "#FFFFFF"
+        # Stronger, theme-appropriate tint for the pass/fail bands
+        step_missed_color = "rgba(255,23,8,0.35)" if is_light else "rgba(231,76,60,0.15)"
+        step_met_color    = "rgba(27,135,32,0.35)" if is_light else "rgba(46,204,113,0.15)"
+
         fig_gauge = go.Figure(go.Indicator(
             mode="gauge+number+delta",
             value=percent_met,
-            number={"suffix": "%", "font": dict(family=FONT_FAMILY, size=48, color="white")},
+            number={"suffix": "%", "font": dict(family=FONT_FAMILY, size=48, color=gauge_number_color)},
             delta={
                 "reference": PCT_TARGET_4B,
                 "increasing": {"color": MET_COLOR},
                 "decreasing": {"color": MISSED_COLOR},
-                "font": dict(family=FONT_FAMILY, size=14),
+                "font": dict(family=FONT_FAMILY, size=14, color=TEXT_PRIMARY),
             },
             title={
                 "text": "<b>Indicator 4b — % Meeting Standard</b>",
@@ -623,11 +604,11 @@ def plot_indicator_4b(result_dict, candidate_df):
                 "borderwidth": 2,
                 "bordercolor": BORDER,
                 "steps": [
-                    {"range": [0, PCT_TARGET_4B], "color": "rgba(231,76,60,0.15)"},
-                    {"range": [PCT_TARGET_4B, 100], "color": "rgba(46,204,113,0.15)"},
+                    {"range": [0, PCT_TARGET_4B], "color": step_missed_color},
+                    {"range": [PCT_TARGET_4B, 100], "color": step_met_color},
                 ],
                 "threshold": {
-                    "line": {"color": "white", "width": 3},
+                    "line": {"color": gauge_threshold_color, "width": 3},
                     "thickness": 0.85,
                     "value": PCT_TARGET_4B,
                 },

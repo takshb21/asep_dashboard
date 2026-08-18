@@ -1,5 +1,6 @@
 import pandas as pd
 import streamlit as st
+from streamlit_theme import st_theme
 
 import plotly.express as px
 import plotly.graph_objects as go
@@ -140,8 +141,12 @@ def chapter_5_chart(merge_data, year_of_teaching):
     st.markdown("---")
     col3, col4 = st.columns(2)
     col5, col6 = st.columns(2)
+    TEXT_PRIMARY = "var(--text-color)"
  
     # ════════════════════════════════════════════════════════════════════════
+    # CHART 1 – Gauge: Overall Average Score
+    # ════════════════════════════════════════════════════════════════════════
+        # ════════════════════════════════════════════════════════════════════════
     # CHART 1 – Gauge: Overall Average Score
     # ════════════════════════════════════════════════════════════════════════
     with col1:
@@ -150,29 +155,47 @@ def chapter_5_chart(merge_data, year_of_teaching):
             "🟢 Green = Met Standard (≥ 50)  |  🔴 Red = Did Not Meet (< 50). "
             "Needle shows the overall average."
         )
- 
+
         avg_score   = df["Calculated Growth Score"].mean()
         gauge_color = MET_COLOR if avg_score >= TARGET else MISSED_COLOR
- 
+
+        theme = st_theme(key="theme_chapter_5")
+        is_light = theme and theme.get("base") == "light"
+
+        gauge_fill_color   = "#FFFFFF" if is_light else "#000000"   # white fill in light theme
+        gauge_border_color = "#000000" if is_light else "#FFFFFF"   # black border in light theme
+
         fig1 = go.Figure(
             go.Indicator(
                 mode="gauge+number",
                 value=avg_score,
+                number=dict(
+                    font=dict(color=TEXT_PRIMARY),
+                ),
                 domain={"x": [0, 1], "y": [0, 1]},
                 gauge={
-                    "axis": {"range": [0, 100], "tickwidth": 1, "tickcolor": "darkblue"},
+                    "axis": {
+                        "range": [0, 100],
+                        "tickwidth": 1,
+                        "tickcolor": gauge_border_color,
+                        "tickfont": {"color": TEXT_PRIMARY},
+                    },
                     "bar": {"color": gauge_color},
-                    "bgcolor": "white",
+                    "bgcolor": gauge_fill_color,
                     "borderwidth": 2,
-                    "bordercolor": "gray",
+                    "bordercolor": gauge_border_color,
                     "steps": [
-                        {"range": [0, 50],  "color": "#000000"},
-                        {"range": [50, 100], "color": "#000000"},
+                        {"range": [0, 50],   "color": gauge_fill_color},
+                        {"range": [50, 100], "color": gauge_fill_color},
                     ],
                 },
             )
         )
-        fig1.update_layout(height=300, margin=dict(t=30, b=10))
+        fig1.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            height=300,
+            margin=dict(t=30, b=10),
+        )
         st.plotly_chart(fig1, use_container_width=True)
  
     # ════════════════════════════════════════════════════════════════════════

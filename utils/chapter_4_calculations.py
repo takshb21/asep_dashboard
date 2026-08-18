@@ -1,29 +1,29 @@
 import pandas as pd
 import streamlit as st
-
+from streamlit_theme import st_theme
 
 import plotly.express as px
 import plotly.graph_objects as go
 
 
 # ─────────────────────────────────────────────
-# DARK THEME DESIGN TOKENS
+# THEME TOKENS (shared across all chapters)
 # ─────────────────────────────────────────────
-BG_MAIN      = "#0D1117"   # page background
-BG_CARD      = "#161B22"   # chart / card background
-BG_SURFACE   = "#1C2333"   # slightly lighter surface
-BORDER       = "#30363D"   # subtle border
-ACCENT_BLUE  = "#58A6FF"   # bright blue for lines/accents
-ACCENT_TEAL  = "#3BCEAC"   # teal for pass/positive
-ACCENT_AMBER = "#F0B429"   # amber for secondary line
-TEXT_PRIMARY = "#E6EDF3"   # main text
-TEXT_MUTED   = "#FFFFFF"   # captions / axis labels
-GRID_COLOR   = "#21262D"   # chart gridlines
+BG_MAIN      = "rgba(0,0,0,0)"   # fully transparent — let the real page show through
+BG_CARD      = "rgba(0,0,0,0)"   # was a hardcoded dark card bg — now transparent
+BG_SURFACE   = "rgba(0,0,0,0)"   # was a hardcoded lighter surface — now transparent
+BORDER       = "rgba(128,128,128,0.4)"
+ACCENT_BLUE  = "#58A6FF"
+ACCENT_TEAL  = "#3BCEAC"
+ACCENT_AMBER = "#F0B429"
+TEXT_PRIMARY = "var(--text-color)"
+TEXT_MUTED   = "var(--text-color)"
+GRID_COLOR   = "rgba(128,128,128,0.25)"
 
-# Gauge / traffic light
-GREEN  = "#2EA043"         # satisfactory  0 – 1.8
-YELLOW = "#F0B429"         # developing    1.8 – 2.0
-RED    = "#F85149"         # poor          2.0 – 2.5
+# Gauge / traffic light — unchanged, these are semantic (pass/fail), not theme colors
+GREEN  = "#2EA043"
+YELLOW = "#F0B429"
+RED    = "#F85149"
 
 FONT_FAMILY = "Montserrat, sans-serif"
 
@@ -133,7 +133,9 @@ def get_asep_consolidated_data(merged_df):
 
     return df_latest
 
-def chapter_4_chart(df):
+def chapter_4_chart(df, key_suffix="chapter_4"):
+    
+
     MET_COLOR     = "#1B8720"   # green  – score >= 50
     MISSED_COLOR  = "#FF1708"   # red    – score <  50
     # TARGET        = 50
@@ -188,7 +190,7 @@ def chapter_4_chart(df):
     )
     fig_radar.update_layout(
         polar=dict(
-            bgcolor="black",
+            bgcolor="rgba(0,0,0,0)",   # was "black" — invisible/wrong in light theme
             radialaxis=dict(
                 visible=True,
                 range=[0, max(values) + 0.4],
@@ -249,7 +251,6 @@ def chapter_4_chart(df):
             y=grade_df["Average Score"],
             marker=dict(
                 color=bar_colors,
-                line=dict(color=BG_MAIN, width=1.5),
                 opacity=0.9,
             ),
             text=grade_df["Average Score"].round(2),
@@ -287,9 +288,17 @@ def chapter_4_chart(df):
     # ══════════════════════════════════════════
     st.markdown("---")
     overall_avg = round(df["Overall"].mean(), 2)
+
+    # Shared theme detection for both charts below
+    theme =  st_theme(key=f"theme_{key_suffix}")
+    is_light = theme and theme.get("base") == "light"
+    donut_text_color   = "#000000" if is_light else "#FFFFFF"
+    donut_border_color = "#000000" if is_light else "#FFFFFF"
+
     col1, col2 = st.columns(2)
 
     with col1:
+        st.subheader("Principal Survey Pass Rate")
         survey_data = chapter_4_survey_summary(df)
         total_valid_surveys, surveys_meeting_standard = survey_data['total_valid_surveys'], survey_data['surveys_meeting_standard']
         if total_valid_surveys > 0:
@@ -305,29 +314,36 @@ def chapter_4_chart(df):
 
         gauge_color = GREEN if pct_meeting_standard >= 70 else RED
 
+        gauge_fill_color   = "#FFFFFF" if is_light else "#000000"
+        gauge_border_color = "#000000" if is_light else "#FFFFFF"
+
         fig_gauge = go.Figure(
             go.Indicator(
                 mode="gauge+number",
                 value=pct_meeting_standard,
                 number=dict(
-                    font=dict(size=52, color="white"),
+                    font=dict(size=52, color=TEXT_PRIMARY),
                     suffix="%",
                 ),
                 domain={"x": [0, 1], "y": [0, 1]},
                 gauge={
-                    "axis": {"range": [0, 100], "tickwidth": 1, "tickcolor": "darkblue"},
+                    "axis": {
+                        "range": [0, 100],
+                        "tickwidth": 1,
+                        "tickcolor": gauge_border_color,
+                        "tickfont": {"color": TEXT_PRIMARY},
+                    },
                     "bar": {"color": gauge_color},
-                    "bgcolor": "white",
+                    "bgcolor": gauge_fill_color,
                     "borderwidth": 2,
-                    "bordercolor": "gray",
+                    "bordercolor": gauge_border_color,
                     "steps": [
-                        {"range": [0, 70],   "color": "#000000"},
-                        {"range": [70, 100], "color": "#000000"},
+                        {"range": [0, 70],   "color": gauge_fill_color},
+                        {"range": [70, 100], "color": gauge_fill_color},
                     ],
                 },
             )
         )
-        fig_gauge.update_layout(height=300, margin=dict(t=30, b=10))
         st.plotly_chart(fig_gauge, use_container_width=True)
 
     with col2:
@@ -341,7 +357,6 @@ def chapter_4_chart(df):
         ethnicity_df = (
             df.groupby("Race/Ethnicity")["Overall"].mean().round(2).reset_index()
         )
-        # Dark-friendly vivid palette
         palette = [
             ACCENT_BLUE, ACCENT_TEAL, "#F63228", ACCENT_AMBER,
             "#BC8CFF", "#FF7B72", "#56D364",
@@ -354,10 +369,10 @@ def chapter_4_chart(df):
                 hole=0.48,
                 marker=dict(
                     colors=palette[: len(ethnicity_df)],
-                    line=dict(color=BG_MAIN, width=2.5),
+                    line=dict(color=donut_border_color, width=2),
                 ),
                 textinfo="label+percent",
-                textfont=dict(family=FONT_FAMILY, size=11, color=TEXT_PRIMARY),
+                textfont=dict(family=FONT_FAMILY, size=11, color=donut_text_color),
                 hovertemplate=(
                     "<b>%{label}</b><br>Avg Score: %{value:.2f}<br>Share: %{percent}<extra></extra>"
                 ),
@@ -380,7 +395,7 @@ def chapter_4_chart(df):
                 dict(
                     text=f"<b>{overall_avg}</b><br><span style='font-size:11px'>Overall</span>",
                     x=0.5, y=0.5,
-                    font=dict(size=18, family=FONT_FAMILY, color=TEXT_PRIMARY),
+                    font=dict(size=18, family=FONT_FAMILY, color=donut_text_color),
                     showarrow=False,
                 )
             ],
@@ -579,10 +594,8 @@ def principal_perceptions(principal_perception_df, educator_details_df):
         f"Total evaluation sample size: **{total_records}**."
     )
 
-    
-
     if total_records != 0:
-        chapter_4_chart(filtered_copy_df)
+        chapter_4_chart(filtered_copy_df, key_suffix="chapter_4")
     else:
         st.info('Select Other Year No Record Found')
 

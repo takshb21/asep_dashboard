@@ -5,43 +5,7 @@ import pandas as pd
 import streamlit as st
 import io
 
-
-# def process_and_rename_file(uploaded_file):
-#     index_name = ['Field Supervisor Last Name', 'Field Supervisor First Name',
-#        'Assignment Begin Date', 'Candidate TEA ID', 'Candidate Last Name',
-#        'Candidate First Name', 'Visit Date', 'Duration Hours', 'Comments',
-#        'Field Supervisor TEA ID', 'Assignment Type', 'Experience Model',
-#        'Assignment End Date', 'Observation Setting', 'Total Points']
-    
-#     uploaded_file.seek(0) 
-#     # df = pd.read_excel(uploaded_file, skipfooter= 2)
-
-#     # Check file extension to read correctly
-#     if uploaded_file.name.endswith(".csv"):
-#         df = pd.read_csv(uploaded_file, skiprows=10)
-#         df.columns = index_name
-#     else:
-#         df = pd.read_excel(uploaded_file, skipfooter=2, engine='calamine')
-
-#     if uploaded_file.name == 'academic_year_principal_perceptions.xlsx':
-#         new_name = "academic_year_principal_perceptions"
-#     elif uploaded_file.name == 'educator_details_with_emp_start_date.xlsx':
-#         new_name = 'educator_details_with_emp_start_date'
-#     elif uploaded_file.name == 'academic_year_average_student_growth_by_candidate.xlsx':
-#         new_name = 'academic_year_average_student_growth_by_candidate'
-#     elif uploaded_file.name == 'new_teacher_perceptions_by_candidate.xlsx':
-#         new_name = 'new_teacher_perceptions_by_candidate'
-#     elif uploaded_file.name == 'Examinee Roster.xlsx':
-#         new_name = 'exam_roaster_data'
-#     elif uploaded_file.name == "epp_observations_report_134267067791026568.csv":
-#         new_name = "observation_df"
-#     else:
-#         new_name = uploaded_file.name
-
-#     return new_name, df
 import re
-from pathlib import Path
-import pandas as pd
 
 # ─────────────────────────────────────────────
 # FINISHER FILE DETECTION + READING
@@ -151,9 +115,9 @@ def process_and_rename_file(uploaded_file):
 
     # 1. Handle Manual Collisions First (Same columns in both files)
     if 'principal_perceptions' in uploaded_file.name.lower():
-        new_name = 'academic_year_principal_perceptions'
+        new_name = 'principal_perceptions'
     elif 'new_teacher_perceptions' in uploaded_file.name.lower():
-        new_name = 'new_teacher_perceptions_by_candidate'
+        new_name = 'teacher_perceptions'
 
     # 2. Schema-Based Auto-Matching for all other unique datasets
     elif cols == sorted([
