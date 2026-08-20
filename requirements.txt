@@ -6,3 +6,4 @@ matplotlib==3.10.8
 plotly==6.6.0
 st_theme==1.2.3
 python-calamine==0.8.2
+streamlit-desktop-app==0.3.4
